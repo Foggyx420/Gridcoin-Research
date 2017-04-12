@@ -12,7 +12,6 @@
 #include "main.h"
 #include "net.h"
 #include "wallet.h"
-//#include "univalue.h"
 #include "upgrader.h"
 
 using namespace std;
