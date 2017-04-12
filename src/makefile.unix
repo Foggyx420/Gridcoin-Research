@@ -108,58 +108,32 @@ xCXXFLAGS = -O2 $(EXT_OPTIONS) -std=c++11 -pthread -Wall -Wextra -Wno-ignored-qu
 # adds some defaults in front. Unfortunately, LDFLAGS=... $(LDFLAGS) does not work.
 xLDFLAGS=$(LDHARDENING) $(LDFLAGS)
 
-OBJS= \
-    obj/alert.o \
-    obj/version.o \
-    obj/checkpoints.o \
-    obj/netbase.o \
-    obj/addrman.o \
-    obj/crypter.o \
-    obj/key.o \
-    obj/db.o \
-    obj/init.o \
-    obj/irc.o \
-    obj/keystore.o \
-    obj/miner.o \
-    obj/main.o \
-    obj/net.o \
-    obj/protocol.o \
-    obj/bitcoinrpc.o \
-    obj/rpcdump.o \
-    obj/rpcnet.o \
-    obj/rpcmining.o \
-    obj/rpcwallet.o \
-    obj/rpcblockchain.o \
-    obj/rpcrawtransaction.o \
-    obj/script.o \
-    obj/sync.o \
-    obj/util.o \
-    obj/upgrader.o \
-    obj/wallet.o \
-    obj/walletdb.o \
-    obj/noui.o \
-    obj/kernel.o \
-    obj/pbkdf2.o \
-    obj/scrypt.o \
-    obj/scrypt-arm.o \
-    obj/scrypt-x86.o \
-    obj/scrypt-x86_64.o \
-    obj/cpid.o \
-    obj/block.o \
-    obj/beacon.o
-
-all: gridcoinresearchd
-
+SUBDIRS := gridcoin
+OBJDIRS := obj $(addprefix obj/,$(SUBDIRS))
+SRC := $(foreach sdir,$(SUBDIRS),$(wildcard $(sdir)/*.cpp)) \
+       $(wildcard *.cpp)
+ASM := $(wildcard *.S)
+DEP := $(patsubst %.cpp,obj/%.d,$(SRC))
+OBJ := $(patsubst %.cpp,obj/%.o,$(SRC)) \
+       $(patsubst %.S,obj/%.o,$(ASM))
 LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
-OBJS += obj/txdb-leveldb.o
+
+.PHONY: all checkdirs clean
+
+all: checkdirs gridcoinresearchd
+
+checkdirs: $(OBJDIRS)
+
+$(OBJDIRS):
+	@mkdir -p $@
+
 leveldb/libleveldb.a:
 	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..;
-obj/txdb-leveldb.o: leveldb/libleveldb.a
+obj/txdb-leveldb.o: txdb-leveldb.cpp leveldb/libleveldb.a
 
 # auto-generated dependencies:
--include obj/*.P
 
 obj/build.h: FORCE
 	/bin/sh ../share/genbuild.sh obj/build.h
@@ -175,26 +149,27 @@ obj/scrypt-x86_64.o: scrypt-x86_64.S
 obj/scrypt-arm.o: scrypt-arm.S
 	$(CXX) -c $(xCXXFLAGS) -MMD -o $@ $<
 
-obj/%.o: %.cpp
-	$(CXX) -c $(xCXXFLAGS) -MMD -MF $(@:%.o=%.d) -o $@ $<
-	@cp $(@:%.o=%.d) $(@:%.o=%.P); \
-	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-	      -e '/^$$/ d' -e 's/$$/ :/' < $(@:%.o=%.d) >> $(@:%.o=%.P); \
-	  rm -f $(@:%.o=%.d)
+define make-goal
+$1/%.o: %.cpp | $(OBJDIRS)
+	$(CXX) -c $(xCXXFLAGS) -MMD -MF $$(@:%.o=%.d) -o $$@ $$<
+endef
 
-gridcoinresearchd: $(OBJS:obj/%=obj/%)
+$(foreach bdir,$(OBJDIRS),$(eval $(call make-goal,$(bdir))))
+
+gridcoinresearchd: $(OBJ)
 	$(LINK) $(xCXXFLAGS) -o $@ $^ $(xLDFLAGS) $(LIBS)
+
 
 clean:
 	-rm -f gridcoinresearchd
 	-rm -f test_gridcoin
-	-rm -f obj/*.o
-	-rm -f obj/*.P
+	-rm -rf $(OBJDIRS)
 	-rm -f obj-test/*.o
 	-rm -f obj-test/*.P
 	-rm -f obj/build.h
 
 FORCE:
 
+-include $(DEP)
 include Makefile.include.test
 

@@ -5,12 +5,12 @@
 
 #include "main.h"
 #include "bitcoinrpc.h"
-#include "cpid.h"
+#include "gridcoin/cpid.h"
 #include "kernel.h"
 #include "init.h" // for pwalletMain
 #include "block.h"
 #include "txdb.h"
-#include "beacon.h"
+#include "gridcoin/beacon.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()

@@ -1,4 +1,4 @@
-#include "beacon.h"
+#include "gridcoin/beacon.h"
 #include "main.h"
 #include "uint256.h"
 #include "key.h"

@@ -20,7 +20,8 @@
 #include "protocol.h"
 #include "addrman.h"
 
-#include "gridcoin.h"
+#include "gridcoin/gridcoin.h"
+
 class CRequestTracker;
 class CNode;
 class CBlockIndex;

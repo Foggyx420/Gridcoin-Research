@@ -21,7 +21,7 @@ obj-test/%.o: test/%.cpp
 			-e '/^$$/ d' -e 's/$$/ :/' < $(@:%.o=%.d) >> $(@:%.o=%.P); \
 		rm -f $(@:%.o=%.d)
 
-test_gridcoin: $(TESTOBJS) $(filter-out obj/init.o,$(OBJS:obj/%=obj/%))
+test_gridcoin: $(TESTOBJS) $(filter-out obj/init.o,$(OBJ:obj/%=obj/%))
 	$(LINK) $(xCXXFLAGS) -o $@ $(LIBPATHS) $^ $(TESTLIBS) $(xLDFLAGS) $(LIBS)
 
 test: test_gridcoin FORCE
