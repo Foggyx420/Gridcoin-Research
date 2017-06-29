@@ -4347,15 +4347,18 @@ bool VerifySuperblock(std::string superblock, int nHeight)
 
 bool NeedASuperblock()
 {
-        bool bDireNeedOfSuperblock = false;
+    bool bDireNeedOfSuperblock = false;
+    if (nBestHeight % 3 == 0)
+    {
         std::string superblock = ReadCache("superblock","all");
         if (superblock.length() > 20 && !OutOfSyncByAge())
         {
             if (!VerifySuperblock(superblock,pindexBest->nHeight)) bDireNeedOfSuperblock = true;
         }
-        int64_t superblock_age = GetAdjustedTime() - mvApplicationCacheTimestamp["superblock;magnitudes"];
-        if ((double)superblock_age > (double)(GetSuperblockAgeSpacing(nBestHeight))) bDireNeedOfSuperblock = true;
-        return bDireNeedOfSuperblock;
+    }
+    int64_t superblock_age = GetAdjustedTime() - mvApplicationCacheTimestamp["superblock;magnitudes"];
+    if (superblock_age > (GetSuperblockAgeSpacing(nBestHeight))) bDireNeedOfSuperblock = true;
+    return bDireNeedOfSuperblock;
 }
 
 
@@ -4456,9 +4459,7 @@ void GridcoinServices()
         }
     }
 
-    int64_t superblock_age = GetAdjustedTime() - mvApplicationCacheTimestamp["superblock;magnitudes"];
-    bool bNeedSuperblock = ((double)superblock_age > (double)(GetSuperblockAgeSpacing(nBestHeight)));
-    if ( nBestHeight % 3 == 0 && NeedASuperblock() ) bNeedSuperblock=true;
+    bool bNeedSuperblock = NeedASuperblock();
 
     if (fDebug10) 
     {
