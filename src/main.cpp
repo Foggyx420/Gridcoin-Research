@@ -3301,6 +3301,9 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck, boo
             std::string legacy_neural_hash = RetrieveMd5(superblock);
             double popularity = 0;
             std::string consensus_hash = GetNeuralNetworkSupermajorityHash(popularity);
+            // Add to logging for hashes
+            printf("\nSuperblock unpacked contract - %s\n", superblock.c_str());
+            printf("Superblock hash %s consensus hash %s Length unpacked %" PRIi64 "\n", neural_hash.c_str(), consensus_hash.c_str(), superblock.length());
             // Only reject superblock when it is new And when QuorumHash of Block != the Popular Quorum Hash:
             if (IsLockTimeWithinMinutes(GetBlockTime(),15)  && !fColdBoot)
             {
@@ -7525,8 +7528,11 @@ std::string GetNeuralNetworkSuperBlock()
                 if (fDebug2 && LessVerbose(5)) printf("Appending SuperBlock %f\r\n",(double)contract.length());
                 if (AreBinarySuperblocksEnabled(nBestHeight))
                 {
+                    printf("\nGetSuperblock contract unpacked - %s\n", contract.c_str());
+                    printf("GetSuperblock contract unpacked length %" PRIi64 "\n", contract.length());
                     // 12-21-2015 : Stake a binary superblock
                     contract = PackBinarySuperblock(contract);
+                    printf("GetSuperblock contract packed length %" PRIi64 "\n", contract.length());
                 }
             #endif
             return contract;
