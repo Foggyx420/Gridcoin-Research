@@ -8460,6 +8460,18 @@ void IncrementCurrentNeuralNetworkSupermajority(std::string NeuralHash, std::str
 void IncrementNeuralNetworkSupermajority(const std::string& NeuralHash, const std::string& GRCAddress, double distance, int64_t locktime)
 {
     if (NeuralHash.length() < 5) return;
+    CBitcoinAddress address(GRCAddress);
+    bool validaddresstovote = address.IsValid();
+    if (!validaddresstovote)
+    {
+        if (fDebug3) printf("INNS : Vote found in block with invalid GRC address. HASH %s GRC %s\n", NeuralHash.c_str(), GRCAddress.c_str());
+        return;
+    }
+    if (!IsNeuralNodeParticipant(GRCAddress, locktime))
+    {
+        if (fDebug3) printf("INNS : Vote found in block from ineligible neural node participant. HASH %s GRC %s\n", NeuralHash.c_str(), GRCAddress.c_str());
+        return;
+    }
     double temp_hashcount = 0;
     if (mvNeuralNetworkHash.size() > 0)
     {
