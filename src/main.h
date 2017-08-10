@@ -184,7 +184,7 @@ extern std::string  msPrimaryCPID;
 
 extern double       mdPORNonce;
 extern double       mdLastPorNonce;
-extern double       mdMachineTimerLast;
+extern int64_t      mdMachineTimerLast;
 
 extern std::string  msHashBoinc;
 extern std::string  msMiningErrors;
