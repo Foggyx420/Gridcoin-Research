@@ -57,11 +57,10 @@ extern std::string ExtractValue(std::string data, std::string delimiter, int pos
 extern Array SuperblockReport(std::string cpid);
 bool IsSuperBlock(CBlockIndex* pIndex);
 MiningCPID GetBoincBlockByIndex(CBlockIndex* pblockindex);
-extern double GetSuperblockMagnitudeByCPID(std::string data, std::string cpid);
+double GetSuperblockMagnitudeByCPID(std::string data, std::string cpid);
 extern int64_t BeaconTimeStamp(std::string cpid, bool bZeroOutAfterPOR);
 extern bool VerifyCPIDSignature(std::string sCPID, std::string sBlockHash, std::string sSignature);
 bool NeedASuperblock();
-bool VerifySuperblock(std::string superblock, int nHeight);
 double ExtractMagnitudeFromExplainMagnitude();
 std::string GetQuorumHash(const std::string& data);
 double GetOutstandingAmountOwed(StructCPID &mag, std::string cpid, int64_t locktime, double& total_owed, double block_magnitude);
@@ -86,7 +85,6 @@ extern bool AdvertiseBeacon(bool bFromService, std::string &sOutPrivKey, std::st
 double Round(double d, int place);
 bool UnusualActivityReport();
 double GetCountOf(std::string datatype);
-extern double GetSuperblockAvgMag(std::string data,double& out_beacon_count,double& out_participant_count,double& out_average, bool bIgnoreBeacons,int nHeight);
 extern bool CPIDAcidTest2(std::string bpk, std::string externalcpid);
 
 bool AsyncNeuralRequest(std::string command_name,std::string cpid,int NodeLimit);
@@ -964,45 +962,6 @@ void GetSuperblockProjectCount(std::string data, double& out_project_count, doub
        out_whitelist_count = GetCountOf("project");
 	   if (fDebug10) printf(" GSPC:CountOfProjInBlock %f vs WhitelistedCount %f  \r\n",(double)out_project_count,(double)out_whitelist_count);
 }
-
-
-double GetSuperblockAvgMag(std::string data,double& out_beacon_count,double& out_participant_count,double& out_average, bool bIgnoreBeacons,int nHeight)
-{
-    try
-    {
-        std::string mags = ExtractXML(data,"<MAGNITUDES>","</MAGNITUDES>");
-        std::string avgs = ExtractXML(data,"<AVERAGES>","</AVERAGES>");
-        double mag_count = 0;
-        double avg_count = 0;
-        if (mags.empty()) return 0;
-        double avg_of_magnitudes = GetAverageInList(mags,mag_count);
-        double avg_of_projects   = GetAverageInList(avgs,avg_count);
-        if (!bIgnoreBeacons) out_beacon_count = GetCountOf("beacon");
-		double out_project_count = GetCountOf("project");
-        out_participant_count = mag_count;
-        out_average = avg_of_magnitudes;
-        if (avg_of_magnitudes < 000010)  return -1;
-        if (avg_of_magnitudes > 170000)  return -2;
-        if (avg_of_projects   < 050000)  return -3;
-		// Note bIgnoreBeacons is passed in when the chain is syncing from 0 (this is because the lists of beacons and projects are not full at that point)
-        if (!fTestNet && !bIgnoreBeacons && (mag_count < out_beacon_count*.90 || mag_count > out_beacon_count*1.10)) return -4;
-		if (fDebug10) printf(" CountOfProjInBlock %f vs WhitelistedCount %f Height %f \r\n",(double)avg_count,(double)out_project_count,(double)nHeight);
-		if (!fTestNet && !bIgnoreBeacons && nHeight > 972000 && (avg_count < out_project_count*.50)) return -5;
-        return avg_of_magnitudes + avg_of_projects;
-    }
-    catch (std::exception &e) 
-    {
-                printf("Error in GetSuperblockAvgMag.");
-                return 0;
-    }
-    catch(...)
-    {
-                printf("Error in GetSuperblockAvgMag.");
-                return 0;
-    }
-     
-}
-
 
 
 bool TallyMagnitudesInSuperblock()
@@ -2526,56 +2485,6 @@ Value execute(const Array& params, bool fHelp)
         results.push_back(entry);
         
     }
-    else if (sItem == "superblockaverage")
-    {
-        std::string superblock = ReadCache("superblock","all");
-        double out_beacon_count = 0;
-        double out_participant_count = 0;
-        double out_avg = 0;
-        double avg = GetSuperblockAvgMag(superblock,out_beacon_count,out_participant_count,out_avg,false,nBestHeight);
-        entry.push_back(Pair("avg",avg));
-        entry.push_back(Pair("beacon_count",out_beacon_count));
-        entry.push_back(Pair("beacon_participant_count",out_participant_count));
-        entry.push_back(Pair("average_magnitude",out_avg));
-        entry.push_back(Pair("superblock_valid",VerifySuperblock(superblock,pindexBest->nHeight)));
-        int64_t superblock_age = GetAdjustedTime() - mvApplicationCacheTimestamp["superblock;magnitudes"];
-        entry.push_back(Pair("Superblock Age",superblock_age));
-        bool bDireNeed = NeedASuperblock();
-        entry.push_back(Pair("Dire Need of Superblock",bDireNeed));
-        results.push_back(entry);
-    }
-    else if (sItem == "currentcontractaverage")
-    {
-        std::string contract = "";
-        #if defined(WIN32) && defined(QT_GUI)
-                    contract = qtGetNeuralContract("");
-        #endif
-        entry.push_back(Pair("Contract",contract));
-        double out_beacon_count = 0;
-        double out_participant_count = 0;
-        double out_avg = 0;
-        double avg = GetSuperblockAvgMag(contract,out_beacon_count,out_participant_count,out_avg,false,nBestHeight);
-        bool bValid = VerifySuperblock(contract,pindexBest->nHeight);
-        entry.push_back(Pair("avg",avg));
-        entry.push_back(Pair("beacon_count",out_beacon_count));
-        entry.push_back(Pair("avg_mag",out_avg));
-        entry.push_back(Pair("beacon_participant_count",out_participant_count));
-        entry.push_back(Pair("superblock_valid",bValid));
-        //Show current contract neural hash
-        std::string sNeuralHash = "";
-
-        #if defined(WIN32) && defined(QT_GUI)
-            sNeuralHash = qtGetNeuralHash("");
-            entry.push_back(Pair(".NET Neural Hash",sNeuralHash.c_str()));
-        #endif
-    
-        entry.push_back(Pair("Length",(double)contract.length()));
-        std::string neural_hash = GetQuorumHash(contract);
-        entry.push_back(Pair("Wallet Neural Hash",neural_hash));
-        
-        results.push_back(entry);
-        
-    }
     else if (sItem == "getlistof")
     {
         if (params.size() != 2)
@@ -2951,64 +2860,48 @@ Array LifetimeReport(std::string cpid)
 Array SuperblockReport(std::string cpid)
 {
 
-      Array results;
-      Object c;
-      std::string Narr = std::to_string(GetAdjustedTime());
-      c.push_back(Pair("SuperBlock Report (14 days)",Narr));
-      if (!cpid.empty())      c.push_back(Pair("CPID",cpid));
+    Array results;
+    Object c;
+    std::string Narr = std::to_string(GetAdjustedTime());
+    c.push_back(Pair("SuperBlock Report (14 days)",Narr));
+    if (!cpid.empty())      c.push_back(Pair("CPID",cpid));
 
-      results.push_back(c);
-         
-      int nMaxDepth = nBestHeight;
-      int nLookback = BLOCKS_PER_DAY * 14;
-      int nMinDepth = (nMaxDepth - nLookback) - ( (nMaxDepth-nLookback) % BLOCK_GRANULARITY);
-      //int iRow = 0;
-      CBlockIndex* pblockindex = pindexBest;
-      while (pblockindex->nHeight > nMaxDepth)
-      {
-                if (!pblockindex || !pblockindex->pprev || pblockindex == pindexGenesisBlock) return results;
-                pblockindex = pblockindex->pprev;
-      }
+    results.push_back(c);
 
-                        
-      while (pblockindex->nHeight > nMinDepth)
-      {
-                            if (!pblockindex || !pblockindex->pprev) return results;  
-                            pblockindex = pblockindex->pprev;
-                            if (pblockindex == pindexGenesisBlock) return results;
-                            if (!pblockindex->IsInMainChain()) continue;
-                            if (IsSuperBlock(pblockindex))
-                            {
-                                MiningCPID bb = GetBoincBlockByIndex(pblockindex);
-                                if (bb.superblock.length() > 20)
-                                {
-                                        double out_beacon_count = 0;
-                                        double out_participant_count = 0;
-                                        double out_avg = 0;
-                                        // Binary Support 12-20-2015
-                                        std::string superblock = UnpackBinarySuperblock(bb.superblock);
-                                        double avg_mag = GetSuperblockAvgMag(superblock,out_beacon_count,out_participant_count,out_avg,true,pblockindex->nHeight);
-                                        if (avg_mag > 10)
-                                        {
-                                                Object c;
-                                                c.push_back(Pair("Block #" + RoundToString(pblockindex->nHeight,0),pblockindex->GetBlockHash().GetHex()));
-                                                c.push_back(Pair("Date",TimestampToHRDate(pblockindex->nTime)));
-                                                c.push_back(Pair("Average Mag",out_avg));
-                                                c.push_back(Pair("Wallet Version",bb.clientversion));
-                                                double mag = GetSuperblockMagnitudeByCPID(superblock, cpid);
-                                                if (!cpid.empty())
-                                                {
-                                                    c.push_back(Pair("Magnitude",mag));
-                                                }
+    int nMaxDepth = nBestHeight;
+    int nLookback = BLOCKS_PER_DAY * 14;
+    int nMinDepth = (nMaxDepth - nLookback) - ( (nMaxDepth-nLookback) % BLOCK_GRANULARITY);
+    //int iRow = 0;
+    CBlockIndex* pblockindex = pindexBest;
+    while (pblockindex->nHeight > nMaxDepth)
+    {
+        if (!pblockindex || !pblockindex->pprev || pblockindex == pindexGenesisBlock) return results;
+        pblockindex = pblockindex->pprev;
+    }
 
-                                                results.push_back(c);
-        
-                                        }
-                                }
-                            }
-                    
-                        }
-      return results;
+    while (pblockindex->nHeight > nMinDepth)
+    {
+        if (!pblockindex || !pblockindex->pprev) return results;
+        pblockindex = pblockindex->pprev;
+        if (pblockindex == pindexGenesisBlock) return results;
+        if (!pblockindex->IsInMainChain()) continue;
+        if (IsSuperBlock(pblockindex))
+        {
+            MiningCPID bb = GetBoincBlockByIndex(pblockindex);
+            if (bb.superblock.length() > 20)
+            {
+                std::string superblock = UnpackBinarySuperblock(bb.superblock);
+                Object c;
+                c.push_back(Pair("Block #" + RoundToString(pblockindex->nHeight,0),pblockindex->GetBlockHash().GetHex()));
+                c.push_back(Pair("Date",TimestampToHRDate(pblockindex->nTime)));
+                c.push_back(Pair("Wallet Version",bb.clientversion));
+                double mag = GetSuperblockMagnitudeByCPID(superblock, cpid);
+                if (!cpid.empty()) c.push_back(Pair("Magnitude",mag));
+                results.push_back(c);
+            }
+        }
+    }
+    return results;
 
 }
 

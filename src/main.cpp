@@ -64,7 +64,6 @@ extern MiningCPID GetInitializedMiningCPID(std::string name, std::map<std::strin
 std::string GetListOfWithConsensus(std::string datatype);
 extern std::string getHardDriveSerial();
 extern bool IsSuperBlock(CBlockIndex* pIndex);
-extern bool VerifySuperblock(std::string superblock, int nHeight);
 extern double ExtractMagnitudeFromExplainMagnitude();
 extern void AddPeek(std::string data);
 extern void GridcoinServices();
@@ -90,7 +89,6 @@ extern bool BlockNeedsChecked(int64_t BlockTime);
 extern void FixInvalidResearchTotals(std::vector<CBlockIndex*> vDisconnect, std::vector<CBlockIndex*> vConnect);
 int64_t GetEarliestWalletTransaction();
 extern void IncrementVersionCount(const std::string& Version);
-double GetSuperblockAvgMag(std::string data,double& out_beacon_count,double& out_participant_count,double& out_avg,bool bIgnoreBeacons, int nHeight);
 extern bool LoadAdminMessages(bool bFullTableScan,std::string& out_errors);
 extern bool UnusualActivityReport();
 
@@ -3319,11 +3317,6 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck, boo
                         return error("ConnectBlock[] : Superblock stake check caused unknwon exception with GRC address %s", bb.GRCAddress.c_str());
                     }
                 }
-                if (!VerifySuperblock(superblock,pindex->nHeight))
-                {
-                    return error("ConnectBlock[] : Superblock avg mag below 10; SuperblockHash: %s, Consensus Hash: %s",
-                                        neural_hash.c_str(), consensus_hash.c_str());
-                }
                 if (!IsResearchAgeEnabled(pindex->nHeight))
                 {
                     if (consensus_hash != neural_hash && consensus_hash != legacy_neural_hash)
@@ -3351,24 +3344,14 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck, boo
                     if (bb.superblock.length() > 20)
                     {
                             std::string superblock = UnpackBinarySuperblock(bb.superblock);
-                            if (VerifySuperblock(superblock,pindex->nHeight))
-                            {
-                                        LoadSuperblock(superblock,pindex->nTime,pindex->nHeight);
-                                        if (fDebug3) printf("ConnectBlock(): Superblock Loaded %f \r\n",(double)pindex->nHeight);
+                            LoadSuperblock(superblock,pindex->nTime,pindex->nHeight);
+                            if (fDebug3) printf("ConnectBlock(): Superblock Loaded %f \r\n",(double)pindex->nHeight);
                                         /*  Reserved for future use:
                                             bNetAveragesLoaded=false;
                                             nLastTallied = 0;
                                             BsyWaitForTally();
                                         */
-                                        if (!fColdBoot)
-                                        {
-                                            bDoTally = true;
-                                        }
-                            }
-                            else
-                            {
-                                if (fDebug3) printf("ConnectBlock(): Superblock Not Loaded %f\r\n",(double)pindex->nHeight);
-                            }
+                            if (!fColdBoot) bDoTally = true;
                     }
             }
 
@@ -4339,56 +4322,15 @@ bool ServicesIncludesNN(CNode* pNode)
     return (Contains(pNode->strSubVer,"1999")) ? true : false;
 }
 
-bool VerifySuperblock(std::string superblock, int nHeight)
-{
-        bool bPassed = false;
-        double out_avg = 0;
-        double out_beacon_count=0;
-        double out_participant_count=0;
-        double avg_mag = 0;
-        if (superblock.length() > 20)
-        {
-            avg_mag = GetSuperblockAvgMag(superblock,out_beacon_count,out_participant_count,out_avg,false,nHeight);
-            bPassed=true;
-            if (!IsResearchAgeEnabled(nHeight))
-            {
-                return (avg_mag < 10 ? false : true);
-            }
-            // New rules added here:
-            if (out_avg < 10 && fTestNet)  bPassed = false;
-            if (out_avg < 70 && !fTestNet) bPassed = false;
-            if (avg_mag < 10 && !fTestNet) bPassed = false;
-			// Verify distinct project count matches whitelist
-        }
-        if (fDebug3 && !bPassed)
-        {
-            if (fDebug) printf(" Verification of Superblock Failed ");
-            //if (fDebug3) printf("\r\n Verification of Superblock Failed outavg: %f, avg_mag %f, Height %f, Out_Beacon_count %f, Out_participant_count %f, block %s", (double)out_avg,(double)avg_mag,(double)nHeight,(double)out_beacon_count,(double)out_participant_count,superblock.c_str());
-        }
-        return bPassed;
-}
-
 bool NeedASuperblock()
 {
         bool bDireNeedOfSuperblock = false;
         std::string superblock = ReadCache("superblock","all");
-        if (superblock.length() > 20 && !OutOfSyncByAge())
-        {
-            if (!VerifySuperblock(superblock,pindexBest->nHeight)) bDireNeedOfSuperblock = true;
-			/*
-			// Check project count in last superblock
-			double out_project_count = 0;
-			double out_whitelist_count = 0;
-			GetSuperblockProjectCount(superblock, out_project_count, out_whitelist_count);
-			*/
-        }
         int64_t superblock_age = GetAdjustedTime() - mvApplicationCacheTimestamp["superblock;magnitudes"];
+        if (superblock.length() > 20 && !OutOfSyncByAge()) bDireNeedOfSuperblock = true;
         if ((double)superblock_age > (double)(GetSuperblockAgeSpacing(nBestHeight))) bDireNeedOfSuperblock = true;
         return bDireNeedOfSuperblock;
 }
-
-
-
 
 void GridcoinServices()
 {
@@ -4559,10 +4501,7 @@ void GridcoinServices()
                 #if defined(WIN32) && defined(QT_GUI)
                     contract = qtGetNeuralContract("");
                 #endif
-                if (VerifySuperblock(contract,nBestHeight))
-                {
-                        AsyncNeuralRequest("quorum","gridcoin",25);
-                }
+                if (!contract.empty()) AsyncNeuralRequest("quorum","gridcoin",25);
             }
     }
 
@@ -5753,10 +5692,7 @@ bool ComputeNeuralNetworkSupermajorityHashes()
                 if (bb.superblock.length() > 20)
                 {
                     std::string superblock = UnpackBinarySuperblock(bb.superblock);
-                    if (VerifySuperblock(superblock,pblockindex->nHeight))
-                    {
-                        WriteCache("neuralsecurity","pending",RoundToString((double)pblockindex->nHeight,0),GetAdjustedTime());
-                    }
+                    WriteCache("neuralsecurity","pending",RoundToString((double)pblockindex->nHeight,0),GetAdjustedTime());
                 }
 
                 IncrementVersionCount(bb.clientversion);
@@ -5855,13 +5791,10 @@ bool TallyResearchAverages(bool Forcefully)
                                 MiningCPID bb = GetBoincBlockByIndex(pblockindex);
                                 if (bb.superblock.length() > 20)
                                 {
-                                        std::string superblock = UnpackBinarySuperblock(bb.superblock);
-                                        if (VerifySuperblock(superblock,pblockindex->nHeight))
-                                        {
-                                                LoadSuperblock(superblock,pblockindex->nTime,pblockindex->nHeight);
-                                                superblockloaded=true;
-                                                if (fDebug) printf(" Superblock Loaded %f \r\n",(double)pblockindex->nHeight);
-                                        }
+                                    std::string superblock = UnpackBinarySuperblock(bb.superblock);
+                                    LoadSuperblock(superblock,pblockindex->nTime,pblockindex->nHeight);
+                                    superblockloaded=true;
+                                    if (fDebug) printf(" Superblock Loaded %f \r\n",(double)pblockindex->nHeight);
                                 }
                             }
 
