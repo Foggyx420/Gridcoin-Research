@@ -622,7 +622,7 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn)
                     if (!sRewardAddress.empty())
                     {
                         // Ensure this Proof Of Stake Coinbase was Just Generated before sending the reward (prevent rescans from sending rewards):
-                        printf("reward locktime %f curr time %f",(double)wtxIn.nTime,(double)GetAdjustedTime());
+                        printf("reward locktime %u curr time %" PRId64,wtxIn.nTime,GetAdjustedTime());
                         printf(" reward shared %f",(double)dRewardShare);
                         printf(" addr %s",sRewardAddress.c_str());
                         if (IsLockTimeWithinMinutes(wtxIn.nTime,10))
@@ -1635,7 +1635,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                 wtxNew.fFromMe = true;
 
                 int64_t nTotalValue = nValue + nFeeRet;
-                double dPriority = 0;
+                int64_t dPriority = 0;
                 // vouts to the payees
                 BOOST_FOREACH (const PAIRTYPE(CScript, int64_t)& s, vecSend)
                     wtxNew.vout.push_back(CTxOut(s.second, s.first));
@@ -1648,7 +1648,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                 BOOST_FOREACH(PAIRTYPE(const CWalletTx*, unsigned int) pcoin, setCoins)
                 {
                     int64_t nCredit = pcoin.first->vout[pcoin.second].nValue;
-                    dPriority += (double)nCredit * pcoin.first->GetDepthInMainChain();
+                    dPriority += nCredit * pcoin.first->GetDepthInMainChain();
                 }
 
                 int64_t nChange = nValueIn - nValue - nFeeRet;
