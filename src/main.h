@@ -110,7 +110,11 @@ inline bool AreBinarySuperblocksEnabled(int nHeight)
 { 
 	return (fTestNet ? nHeight > 10000 : nHeight > 725000); 
 }
-
+std::string UnpackBinarySuperblock(std::string sBlock);
+std::string PackBinarySuperblock(std::string sBlock);
+bool IsSuperBlock(CBlockIndex* pIndex);
+bool NeedASuperblock();
+bool LoadSuperblock(std::string data, int64_t nTime, int height);
 
 inline int64_t PastDrift(int64_t nTime, int nHeight)   { return IsProtocolV2(nHeight) ? nTime - 20 * 60  : nTime - 20 * 60; }
 inline int64_t FutureDrift(int64_t nTime, int nHeight) { return IsProtocolV2(nHeight) ? nTime + 20 * 60  : nTime + 20 * 60; }

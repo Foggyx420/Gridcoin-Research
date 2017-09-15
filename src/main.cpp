@@ -51,8 +51,6 @@ bool RequestSupermajorityNeuralData();
 extern bool AskForOutstandingBlocks(uint256 hashStart);
 extern bool CleanChain();
 extern void ResetTimerMain(std::string timer_name);
-extern std::string UnpackBinarySuperblock(std::string sBlock);
-extern std::string PackBinarySuperblock(std::string sBlock);
 extern bool TallyResearchAverages(bool Forcefully);
 extern void IncrementCurrentNeuralNetworkSupermajority(std::string NeuralHash, std::string GRCAddress, double distance);
 bool VerifyCPIDSignature(std::string sCPID, std::string sBlockHash, std::string sSignature);
@@ -61,11 +59,9 @@ int DetermineCPIDType(std::string cpid);
 extern MiningCPID GetInitializedMiningCPID(std::string name, std::map<std::string, MiningCPID>& vRef);
 std::string GetListOfWithConsensus(std::string datatype);
 extern std::string getHardDriveSerial();
-extern bool IsSuperBlock(CBlockIndex* pIndex);
 extern double ExtractMagnitudeFromExplainMagnitude();
 extern void AddPeek(std::string data);
 extern void GridcoinServices();
-extern bool NeedASuperblock();
 extern double SnapToGrid(double d);
 extern bool StrLessThanReferenceHash(std::string rh);
 void BusyWaitForTally();
@@ -112,8 +108,6 @@ extern bool GetEarliestStakeTime(std::string grcaddress, std::string cpid);
 extern double GetTotalBalance();
 extern std::string PubKeyToAddress(const CScript& scriptPubKey);
 extern void IncrementNeuralNetworkSupermajority(const std::string& NeuralHash, const std::string& GRCAddress, double distance, const CBlockIndex* pblockindex);
-extern bool LoadSuperblock(std::string data, int64_t nTime, double height);
-
 
 extern CBlockIndex* GetHistoricalMagnitude(std::string cpid);
 
@@ -2692,7 +2686,7 @@ std::string PubKeyToAddress(const CScript& scriptPubKey)
     return address;
 }
 
-bool LoadSuperblock(std::string data, int64_t nTime, double height)
+bool LoadSuperblock(std::string data, int64_t nTime, int height)
 {
         WriteCache("superblock","magnitudes",ExtractXML(data,"<MAGNITUDES>","</MAGNITUDES>"),nTime);
         WriteCache("superblock","averages",ExtractXML(data,"<AVERAGES>","</AVERAGES>"),nTime);
@@ -3299,7 +3293,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck, boo
                             if (VerifySuperblock(superblock, pindex))
                             {
                                         LoadSuperblock(superblock,pindex->nTime,pindex->nHeight);
-                                        if (fDebug3) printf("ConnectBlock(): Superblock Loaded %f \r\n",(double)pindex->nHeight);
+                                        if (fDebug3) printf("ConnectBlock(): Superblock Loaded %d \r\n", pindex->nHeight);
                                         /*  Reserved for future use:
                                             bNetAveragesLoaded=false;
                                             nLastTallied = 0;
@@ -3312,7 +3306,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck, boo
                             }
                             else
                             {
-                                if (fDebug3) printf("ConnectBlock(): Superblock Not Loaded %f\r\n",(double)pindex->nHeight);
+                                if (fDebug3) printf("ConnectBlock(): Superblock Not Loaded %d\r\n", pindex->nHeight);
                             }
                     }
             }
@@ -4458,12 +4452,12 @@ void GridcoinServices()
     }
 
     int64_t superblock_age = GetAdjustedTime() - mvApplicationCacheTimestamp["superblock;magnitudes"];
-    bool bNeedSuperblock = ((double)superblock_age > (double)(GetSuperblockAgeSpacing(nBestHeight)));
+    bool bNeedSuperblock = superblock_age > GetSuperblockAgeSpacing(nBestHeight);
     if ( nBestHeight % 3 == 0 && NeedASuperblock() ) bNeedSuperblock=true;
 
     if (fDebug10) 
     {
-            printf (" MRSA %f, BH %f ",(double)superblock_age,(double)nBestHeight);
+            printf (" MRSA %" PRId64 ", BH %d ", superblock_age, nBestHeight);
     }
 
     if (bNeedSuperblock)
@@ -7470,14 +7464,14 @@ std::string GetNeuralNetworkSuperBlock()
         #endif
         double popularity = 0;
         std::string consensus_hash = GetNeuralNetworkSupermajorityHash(popularity);
-        if (fDebug2 && LessVerbose(5)) printf("SB Age %f, MyHash %s, ConsensusHash %s",(double)superblock_age,myNeuralHash.c_str(),consensus_hash.c_str());
+        if (fDebug2 && LessVerbose(5)) printf("SB Age %" PRId64 ", MyHash %s, ConsensusHash %s", superblock_age, myNeuralHash.c_str(), consensus_hash.c_str());
         if (consensus_hash==myNeuralHash)
         {
             //Stake the contract
             std::string contract = "";
             #if defined(WIN32) && defined(QT_GUI)
                 contract = qtGetNeuralContract("");
-                if (fDebug2 && LessVerbose(5)) printf("Appending SuperBlock %f\r\n",(double)contract.length());
+                if (fDebug2 && LessVerbose(5)) printf("Appending SuperBlock %lu\r\n", contract.length());
                 if (AreBinarySuperblocksEnabled(nBestHeight))
                 {
                     // 12-21-2015 : Stake a binary superblock

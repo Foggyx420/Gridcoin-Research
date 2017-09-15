@@ -27,8 +27,6 @@ bool BackupConfigFile(const string& strDest);
 extern double DoubleFromAmount(int64_t amount);
 std::string PubKeyToAddress(const CScript& scriptPubKey);
 CBlockIndex* GetHistoricalMagnitude(std::string cpid);
-std::string UnpackBinarySuperblock(std::string sBlock);
-std::string PackBinarySuperblock(std::string sBlock);
 extern std::string GetProvableVotingWeightXML();
 extern double ReturnVerifiedVotingBalance(std::string sXML, bool bCreatedAfterSecurityUpgrade);
 extern double ReturnVerifiedVotingMagnitude(std::string sXML, bool bCreatedAfterSecurityUpgrade);
@@ -52,11 +50,9 @@ bool StrLessThanReferenceHash(std::string rh);
 extern std::string AddMessage(bool bAdd, std::string sType, std::string sKey, std::string sValue, std::string sSig, int64_t MinimumBalance, double dFees, std::string sPublicKey);
 extern std::string ExtractValue(std::string data, std::string delimiter, int pos);
 extern Array SuperblockReport(std::string cpid);
-bool IsSuperBlock(CBlockIndex* pIndex);
 MiningCPID GetBoincBlockByIndex(CBlockIndex* pblockindex);
 extern double GetSuperblockMagnitudeByCPID(std::string data, std::string cpid);
 extern bool VerifyCPIDSignature(std::string sCPID, std::string sBlockHash, std::string sSignature);
-bool NeedASuperblock();
 double ExtractMagnitudeFromExplainMagnitude();
 std::string GetQuorumHash(const std::string& data);
 double GetOutstandingAmountOwed(StructCPID &mag, std::string cpid, int64_t locktime, double& total_owed, double block_magnitude);
@@ -85,7 +81,6 @@ extern bool CPIDAcidTest2(std::string bpk, std::string externalcpid);
 
 bool AsyncNeuralRequest(std::string command_name,std::string cpid,int NodeLimit);
 bool FullSyncWithDPORNodes();
-bool LoadSuperblock(std::string data, int64_t nTime, double height);
 
 std::string GetNeuralNetworkSupermajorityHash(double& out_popularity);
 std::string GetCurrentNeuralNetworkSupermajorityHash(double& out_popularity);
@@ -1778,7 +1773,7 @@ Value execute(const Array& params, bool fHelp)
         std::string timestamp = TimestampToHRDate(mvApplicationCacheTimestamp["superblock;magnitudes"]);
         entry.push_back(Pair("Superblock Timestamp",timestamp));
         entry.push_back(Pair("Superblock Block Number",mvApplicationCache["superblock;block_number"]));
-        double height = cdbl(ReadCache("neuralsecurity","pending"),0);
+        int height = std::stoi(ReadCache("neuralsecurity","pending"));
         entry.push_back(Pair("Pending Superblock Height",height));
         results.push_back(entry);
     }
