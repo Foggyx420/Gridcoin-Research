@@ -337,12 +337,12 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
                     {
                         if (wallet->mapAddressBook.count(txaddress))
                         {
-                            if (nMessageCount > 0)
-                                strHTML += "<br /> ";
                             sTxAddress = CBitcoinAddress(txaddress).ToString();
                             sTxOutMessage = ExtractXML(sTxMessages,"<" + sTxAddress + ">", "</" + sTxAddress + ">");
                             if (!sTxOutMessage.empty())
                             {
+                                if (nMessageCount > 0)
+                                    strHTML += "<br /> ";
                                 sTxOutSafeMessage = MakeSafeMessage(sTxOutMessage);
                                 strHTML += QString::fromStdString(sTxOutSafeMessage);
                                 nMessageCount++;

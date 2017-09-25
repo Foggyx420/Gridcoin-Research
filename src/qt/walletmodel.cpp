@@ -210,23 +210,26 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
 	std::string txid = "";
 	std::string messages = "";
 	std::string hashBoinc = "";
-
+    std::string sMessages = "";
     {
         LOCK2(cs_main, wallet->cs_wallet);
 
         // Sendmany
         std::vector<std::pair<CScript, int64_t> > vecSend;
-        messages = "<TXMESSAGE>";
         foreach(const SendCoinsRecipient &rcp, recipients)
         {
             CScript scriptPubKey;
             scriptPubKey.SetDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
             vecSend.push_back(make_pair(scriptPubKey, rcp.amount));
-            std::string smessage = MakeSafeMessage(FromQStringW(rcp.Message));
-            messages = messages + "<" + rcp.address.toStdString() + ">" + smessage + "</" + rcp.address.toStdString() + ">";
-
+            std::string sSafeMessage = MakeSafeMessage(FromQStringW(rcp.Message));
+            if (!sSafeMessage.empty())
+                sMessages = sMessages + "<" + rcp.address.toStdString() + ">" + sSafeMessage + "</" + rcp.address.toStdString() + ">";
         }
-        messages += "</TXMESSAGE>";
+        // Don't waste boinchash space anymore when there is no message. Saves 23 bytes here unlike before we wasted 19 bytes
+        if (!sMessages.empty())
+        {
+            messages += "<TXMESSAGE>" + sMessages + "</TXMESSAGE>";
+        }
         CWalletTx wtx;
         CReserveKey keyChange(wallet);
         int64_t nFeeRequired = 0;
