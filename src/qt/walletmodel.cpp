@@ -216,16 +216,17 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
 
         // Sendmany
         std::vector<std::pair<CScript, int64_t> > vecSend;
-		foreach(const SendCoinsRecipient &rcp, recipients)
+        messages = "<TXMESSAGE>";
+        foreach(const SendCoinsRecipient &rcp, recipients)
         {
             CScript scriptPubKey;
             scriptPubKey.SetDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
             vecSend.push_back(make_pair(scriptPubKey, rcp.amount));
             std::string smessage = MakeSafeMessage(FromQStringW(rcp.Message));
-            messages += "<MESSAGE>" + smessage + "</MESSAGE>";
+            messages = messages + "<" + rcp.address.toStdString() + ">" + smessage + "</" + rcp.address.toStdString() + ">";
 
         }
-
+        messages += "</TXMESSAGE>";
         CWalletTx wtx;
         CReserveKey keyChange(wallet);
         int64_t nFeeRequired = 0;

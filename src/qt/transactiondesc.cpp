@@ -310,15 +310,57 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
 
         CTxDB txdb("r"); // To fetch source txouts
 		//Decrypt any embedded messages
-		std::string eGRCMessage = ExtractXML(wtx.hashBoinc,"<MESSAGE>","</MESSAGE>");
-        std::string sGRCMessage = MakeSafeMessage(eGRCMessage);
+        strHTML += "<br><b>Notes:</b><pre><p><font color=blue> ";
+
+        // Legacy message support
+        std::string eGRCMessage = ExtractXML(wtx.hashBoinc,"<MESSAGE>","</MESSAGE>");
+        if (!eGRCMessage.empty())
+        {
+            std::string sGRCMessage = MakeSafeMessage(eGRCMessage);
+            strHTML += QString::fromStdString(sGRCMessage);
+        }
+
+        // New support for multiple message(s) and future usage of messaging in transactions
+        std::string sTxMessages = ExtractXML(wtx.hashBoinc,"<TXMESSAGE>","</TXMESSAGE>");
+        if (!sTxMessages.empty())
+        {
+            std::string sTxOutMessage;
+            std::string sTxOutSafeMessage;
+            std::string sTxAddress;
+            int nMessageCount = 0;
+            for (auto const& txout : wtx.vout)
+            {
+                if (wallet->IsMine(txout))
+                {
+                    CTxDestination txaddress;
+                    if (ExtractDestination(txout.scriptPubKey, txaddress) && IsMine(*wallet, txaddress))
+                    {
+                        if (wallet->mapAddressBook.count(txaddress))
+                        {
+                            if (nMessageCount > 0)
+                                strHTML += "<br /> ";
+                            sTxAddress = CBitcoinAddress(txaddress).ToString();
+                            sTxOutMessage = ExtractXML(sTxMessages,"<" + sTxAddress + ">", "</" + sTxAddress + ">");
+                            if (!sTxOutMessage.empty())
+                            {
+                                sTxOutSafeMessage = MakeSafeMessage(sTxOutMessage);
+                                strHTML += QString::fromStdString(sTxOutSafeMessage);
+                                nMessageCount++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        strHTML += "</font></p></pre>";
+        // Proper spacing if no message
+        if (eGRCMessage.empty() && sTxMessages.empty())
+            strHTML += "<br>";
         std::string sOptionsNarr = ExtractXML(wtx.hashBoinc,"<NARR>","</NARR>");
         // Contracts
 		//std::string sContractLength = RoundToString((double)wtx.hashBoinc.length(),0);
 		//std::string sContractInfo = "";
 		//if (wtx.hashBoinc.length() > 255) sContractInfo = ": " + wtx.hashBoinc.substr(0,255);
-		strHTML += "<br><b>Notes:</b><pre><font color=blue> " 
-            + QString::fromStdString(sGRCMessage) + "</font></pre><p><br>";
         if (sOptionsNarr.length() > 1)
 		{
             std::string oOptionsNarr = MakeSafeMessage(sOptionsNarr);

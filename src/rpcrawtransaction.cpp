@@ -107,13 +107,14 @@ void GetTxNormalBoincHashInfo(json_spirit::mObject& res, const CMerkleTx& mtx)
 
     std::string sMessageType = ExtractXML(msg,"<MT>","</MT>");
     std::string sTrxMessage = ExtractXML(msg,"<MESSAGE>","</MESSAGE>");
+    std::string sTxMessage = ExtractXML(msg,"<TXMESSAGE>","</TXMESSAGE>");
 
     if(sMessageType.length())
     {
         res["bhType"]="message";
         res["msgType"]=sMessageType;
     }
-    else if(sTrxMessage.length())
+    else if(sTrxMessage.length() || sTxMessage.length())
     {
         res["bhType"]="TrxWithNote";
     }
