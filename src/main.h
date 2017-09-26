@@ -25,6 +25,7 @@ class CAddress;
 class CInv;
 class CNode;
 class CTxMemPool;
+class CTxMessage;
 
 static const int LAST_POW_BLOCK = 2050;
 extern unsigned int REORGANIZE_FAILED;
@@ -577,8 +578,27 @@ public:
     }
 };
 
+typedef std::pair<uint32_t, std::string> CTxMessages;
 
+class CTxMessage
+{
+public:
 
+    void TxSerialize(std::vector<CTxMessages> vMessagesIn, std::ostream& oMessages)
+    {
+        for (auto const& vSerialize : vMessagesIn)
+            oMessages << vSerialize.first << vSerialize.second;
+    }
+
+    void TxDeSerialize(std::istream iMessages, std::vector<CTxMessages>& vMessagesOut)
+    {
+        uint32_t uFirst;
+        std::string sSecond;
+        iMessages >> uFirst >> sSecond;
+        vMessagesOut.push_back(std::make_pair(uFirst,sSecond));
+
+    }
+};
 
 enum GetMinFee_mode
 {
@@ -586,6 +606,7 @@ enum GetMinFee_mode
     GMF_RELAY,
     GMF_SEND,
 };
+
 
 typedef std::map<uint256, std::pair<CTxIndex, CTransaction> > MapPrevTx;
 
