@@ -316,9 +316,7 @@ Value getpeerinfo(const Array& params, bool fHelp)
         obj.push_back(Pair("Neural Network", bNeural));
         if (bNeural)
         {
-            obj.push_back(Pair("Neural Hash", stats.NeuralHash));
             obj.push_back(Pair("Neural Participant", IsNeuralNodeParticipant(stats.sGRCAddress, GetAdjustedTime())));
-
         }
         ret.push_back(obj);
     }
