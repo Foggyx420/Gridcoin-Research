@@ -587,8 +587,8 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn)
                     if (!sRewardAddress.empty())
                     {
                         // Ensure this Proof Of Stake Coinbase was Just Generated before sending the reward (prevent rescans from sending rewards):
-                        printf("reward locktime %f curr time %f",(double)wtxIn.nTime,(double)GetAdjustedTime());
-                        printf(" reward shared %f",(double)dRewardShare);
+                        printf("reward locktime %u curr time %" PRId64,wtxIn.nTime,GetAdjustedTime());
+                        printf(" reward shared %f",dRewardShare);
                         printf(" addr %s",sRewardAddress.c_str());
                         if (IsLockTimeWithinMinutes(wtxIn.nTime,10))
                         {
