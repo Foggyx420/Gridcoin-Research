@@ -1907,7 +1907,7 @@ double GetMagnitudeMultiplier(int64_t nTime)
 
 int64_t GetProofOfStakeMaxReward(uint64_t nCoinAge, int64_t nFees, int64_t locktime)
 {
-    int64_t nInterest = (int64_t)nCoinAge * GetCoinYearReward(locktime) * 33 / (365 * 33 + 8);
+    int64_t nInterest = nCoinAge * GetCoinYearReward(locktime) * 33 / (365 * 33 + 8);
     nInterest += 10*COIN;
     int64_t nBoinc    = (GetMaximumBoincSubsidy(locktime)+1) * COIN;
     int64_t nSubsidy  = nInterest + nBoinc;
@@ -1960,7 +1960,7 @@ int64_t GetProofOfStakeReward(uint64_t nCoinAge, int64_t nFees, std::string cpid
     // Non Research Age - RSA Mode - Legacy (before 10-20-2015)
     if (!IsResearchAgeEnabled(pindexLast->nHeight))
     {
-            int64_t nInterest = (int64_t)nCoinAge * GetCoinYearReward(nTime) * 33 / (365 * 33 + 8);
+            int64_t nInterest = nCoinAge * GetCoinYearReward(nTime) * 33 / (365 * 33 + 8);
             int64_t nBoinc    = GetProofOfResearchReward(cpid,VerifyingBlock);
             int64_t nSubsidy  = nInterest + nBoinc;
             if (fDebug10 || GetBoolArg("-printcreation"))
@@ -1991,7 +1991,7 @@ int64_t GetProofOfStakeReward(uint64_t nCoinAge, int64_t nFees, std::string cpid
     {
             // Research Age Subsidy - PROD
             int64_t nBoinc = ComputeResearchAccrual(nTime, cpid, operation, pindexLast, VerifyingBlock, VerificationPhase, dAccrualAge, dMagnitudeUnit, AvgMagnitude);
-            int64_t nInterest = (int64_t)nCoinAge * GetCoinYearReward(nTime) * 33 / (365 * 33 + 8);
+            int64_t nInterest = nCoinAge * GetCoinYearReward(nTime) * 33 / (365 * 33 + 8);
 
             // TestNet: For any subsidy < 30 day duration, ensure 100% that we have a start magnitude and an end magnitude, otherwise make subsidy 0 : PASS
             // TestNet: For any subsidy > 30 day duration, ensure 100% that we have a midpoint magnitude in Every Period, otherwise, make subsidy 0 : In Test as of 09-06-2015
@@ -2022,6 +2022,7 @@ int64_t GetProofOfStakeReward(uint64_t nCoinAge, int64_t nFees, std::string cpid
 
             OUT_POR = CoinToDouble(nBoinc);
             OUT_INTEREST = CoinToDouble(nInterest);
+            printf("GPOSR : cpid %s VS %d nCoinAge %" PRIu64 " nBoinc %" PRId64 " OUT_POR %f nInterest %" PRId64 " OUT_INTEREST %f nSubsidy %" PRId64 "\n", cpid.c_str(), VerificationPhase, nCoinAge, nBoinc, OUT_POR, nInterest, OUT_INTEREST, nSubsidy);
             return nTotalSubsidy;
 
     }
@@ -3074,6 +3075,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck, boo
         // ResearchAge 1: 
         GetProofOfStakeReward(nCoinAge, nFees, bb.cpid, true, 1, nTime,
             pindex, "connectblock_researcher", OUT_POR, OUT_INTEREST, dAccrualAge, dMagnitudeUnit, dAvgMagnitude);
+        printf("GPOSR CheckBlock : cpid %s Research %f Interest %f\n", bb.cpid.c_str(), bb.ResearchSubsidy, bb.InterestSubsidy);
         if (bb.cpid != "INVESTOR" && dStakeReward > 1)
         {
             
@@ -3884,7 +3886,7 @@ bool CBlock::CheckBlock(std::string sCaller, int height1, int64_t Mint, bool fCh
 		    int64_t nCalculatedResearch = GetProofOfStakeReward(nCoinAge, nFees, bb.cpid, true, 1, nTime,
                 pindexBest, sCaller + "_checkblock_researcher", OUT_POR, OUT_INTEREST, dAccrualAge, dMagnitudeUnit, dAvgMagnitude);
 
-			
+            printf("GPOSR CheckBlock : cpid %s Research %f Interest %f\n", bb.cpid.c_str(), bb.ResearchSubsidy, bb.InterestSubsidy);
             if (bb.ResearchSubsidy > ((OUT_POR*1.25)+1))
             {
                 BusyWaitForTally();
