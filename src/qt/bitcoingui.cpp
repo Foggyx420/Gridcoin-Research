@@ -396,7 +396,7 @@ void qtSyncWithDPORNodes(std::string data)
         std::string testnet_flag = fTestNet ? "TESTNET" : "MAINNET";
         double function_call = qtExecuteGenericFunction("SetTestNetFlag",testnet_flag);
         result = globalcom->dynamicCall("SyncCPIDsWithDPORNodes(Qstring)",qsData).toInt();
-        printf("Done syncing. %f %f\r\n",function_call,(double)result);
+        printf("Done syncing. %f %d\r\n",function_call,result);
     #endif
 }
 
@@ -465,7 +465,7 @@ void qtSetSessionInfo(std::string defaultgrcaddress, std::string cpid, double ma
         std::string session = defaultgrcaddress + "<COL>" + cpid + "<COL>" + RoundToString(magnitude,1);
         QString qsSession = ToQstring(session);
         result = globalcom->dynamicCall("SetSessionInfo(Qstring)",qsSession).toInt();
-        printf("rs%f",(double)result);
+        printf("rs%d",result);
     #endif
 }
 
@@ -480,7 +480,7 @@ void CheckForUpgrade()
                 #ifdef WIN32
                     nNeedsUpgrade = globalcom->dynamicCall("ClientNeedsUpgrade()").toInt();
                 #endif
-                printf("Needs upgraded %f\r\n",(double)nNeedsUpgrade);
+                printf("Needs upgraded %d\r\n",nNeedsUpgrade);
                 if (nNeedsUpgrade) UpgradeClient();
             }
 }
@@ -1881,7 +1881,7 @@ void BitcoinGUI::updateStakingIcon()
 
     if (staking)
     {
-        if (fDebug10) printf("StakeIcon Vitals BH %f, NetWeight %f, Weight %f \r\n", (double)GetTargetSpacing(nBestHeight),(double)nNetworkWeight,(double)nWeight);
+        if (fDebug10) printf("StakeIcon Vitals BH %u, NetWeight %" PRIu64 ", Weight %" PRIu64 "\r\n", GetTargetSpacing(nBestHeight),nNetworkWeight,nWeight);
         QString text = GetEstimatedTime(nEstimateTime);
         labelStakingIcon->setPixmap(QIcon(":/icons/staking_on").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
         labelStakingIcon->setToolTip(tr("Staking.<br>Your weight is %1<br>Network weight is %2<br><b>Estimated</b> time to earn reward is %3.")
