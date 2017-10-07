@@ -470,7 +470,7 @@ Value getblockhash(const Array& params, bool fHelp)
 
     int nHeight = params[0].get_int();
     if (nHeight < 0 || nHeight > nBestHeight)       throw runtime_error("Block number out of range.");
-    if (fDebug10)   printf("Getblockhash %f",(double)nHeight);
+    if (fDebug10)   printf("Getblockhash %d",nHeight);
     CBlockIndex* RPCpblockindex = RPCBlockFinder.FindByHeight(nHeight);
     return RPCpblockindex->phashBlock->GetHex();
 }
@@ -691,7 +691,7 @@ void GetSuperblockProjectCount(std::string data, double& out_project_count, doub
        std::string avgs = ExtractXML(data,"<AVERAGES>","</AVERAGES>");
        double avg_of_projects = GetAverageInList(avgs, out_project_count);
        out_whitelist_count = GetCountOf("project");
-	   if (fDebug10) printf(" GSPC:CountOfProjInBlock %f vs WhitelistedCount %f  \r\n",(double)out_project_count,(double)out_whitelist_count);
+       if (fDebug10) printf(" GSPC:CountOfProjInBlock %f vs WhitelistedCount %f  \r\n",out_project_count,out_whitelist_count);
 }
 
 
@@ -715,7 +715,7 @@ double GetSuperblockAvgMag(std::string data,double& out_beacon_count,double& out
         if (avg_of_projects   < 050000)  return -3;
 		// Note bIgnoreBeacons is passed in when the chain is syncing from 0 (this is because the lists of beacons and projects are not full at that point)
         if (!fTestNet && !bIgnoreBeacons && (mag_count < out_beacon_count*.90 || mag_count > out_beacon_count*1.10)) return -4;
-		if (fDebug10) printf(" CountOfProjInBlock %f vs WhitelistedCount %f Height %f \r\n",(double)avg_count,(double)out_project_count,(double)nHeight);
+        if (fDebug10) printf(" CountOfProjInBlock %f vs WhitelistedCount %f Height %d \r\n",avg_count,out_project_count,nHeight);
 		if (!fTestNet && !bIgnoreBeacons && nHeight > 972000 && (avg_count < out_project_count*.50)) return -5;
         return avg_of_magnitudes + avg_of_projects;
     }
@@ -767,7 +767,7 @@ bool TallyMagnitudesInSuperblock()
                         if (true)
                         {
                             double total_owed = 0;
-                            stMagg.owed = GetOutstandingAmountOwed(stMagg,cpid,(double)GetAdjustedTime(),total_owed,stCPID.Magnitude);
+                            stMagg.owed = GetOutstandingAmountOwed(stMagg,cpid,GetAdjustedTime(),total_owed,stCPID.Magnitude);
                             stMagg.totalowed = total_owed;
                         }
 
@@ -898,7 +898,7 @@ std::string GetListOfWithConsensus(std::string datatype)
 	   int64_t iEndTime= (GetAdjustedTime()-CONSENSUS_LOOKBACK) - ( (GetAdjustedTime()-CONSENSUS_LOOKBACK) % BLOCK_GRANULARITY);
        int64_t nLookback = 30 * 6 * 86400; 
        int64_t iStartTime = (iEndTime - nLookback) - ( (iEndTime - nLookback) % BLOCK_GRANULARITY);
-       printf(" getlistofwithconsensus startime %f , endtime %f, lookback %f \r\n ",(double)iStartTime,(double)iEndTime, (double)nLookback);
+       printf(" getlistofwithconsensus startime %" PRId64 ", endtime %" PRId64 ", lookback %" PRId64 "\r\n ",iStartTime,iEndTime,nLookback);
 	   for(map<string,string>::iterator ii=mvApplicationCache.begin(); ii!=mvApplicationCache.end(); ++ii) 
        {
              std::string key_name  = (*ii).first;
@@ -1437,7 +1437,7 @@ Value execute(const Array& params, bool fHelp)
             int64_t totalAmount = 0;
             double dTotalToSend = 0;
             std::vector<std::string> vRecipients = split(sRecipients.c_str(),"<ROW>");
-            printf("Creating Rain transaction with %f recipients. ",(double)vRecipients.size());
+            printf("Creating Rain transaction with %lu recipients. ",vRecipients.size());
             for (unsigned int i = 0; i < vRecipients.size(); i++)
             {
                 std::string sRow = vRecipients[i];
@@ -2265,7 +2265,7 @@ Value execute(const Array& params, bool fHelp)
             entry.push_back(Pair(".NET Neural Hash",sNeuralHash.c_str()));
         #endif
     
-        entry.push_back(Pair("Length",(double)contract.length()));
+        entry.push_back(Pair("Length",contract.length()));
         std::string neural_hash = GetQuorumHash(contract);
         entry.push_back(Pair("Wallet Neural Hash",neural_hash));
         
@@ -2579,7 +2579,7 @@ Array LifetimeReport(std::string cpid)
             if (pindex == pindexBest) break;
             if (pindex->GetCPID() == cpid && (pindex->nResearchSubsidy > 0))
             {
-                entry.push_back(Pair(RoundToString((double)pindex->nHeight,0), RoundToString(pindex->nResearchSubsidy,2)));
+                entry.push_back(Pair(ToString(pindex->nHeight), RoundToString(pindex->nResearchSubsidy,2)));
             }
             
        }
@@ -2841,7 +2841,7 @@ bool PollExpired(std::string pollname)
 {
     std::string contract = GetPollContractByTitle("poll",pollname);
     double expiration = cdbl(ExtractXML(contract,"<EXPIRATION>","</EXPIRATION>"),0);
-    return (expiration < (double)GetAdjustedTime()) ? true : false;
+    return (expiration < GetAdjustedTime()) ? true : false;
 }
 
 
@@ -3168,7 +3168,7 @@ double ReturnVerifiedVotingMagnitude(std::string sXML, bool bCreatedAfterSecurit
 		{
 				bool fResult = VerifyCPIDSignature(sXmlCPID, sXmlBlockHash, sXmlSigned);
 				bool fAudited = (cdbl(RoundToString(pblockindexMagnitude->nMagnitude,2),0)==cdbl(sMagnitude,0) && fResult);
-				if (fAudited) return (double)pblockindexMagnitude->nMagnitude;
+                if (fAudited) return pblockindexMagnitude->nMagnitude;
 		}
 	}
 	return 0;
@@ -3475,7 +3475,7 @@ Array GetJSONPollsReport(bool bDetail, std::string QueryByTitle, std::string& ou
                 double highest_share = 0;
                 std::string ExpirationDate = TimestampToHRDate(cdbl(Expiration,0));
                 std::string sShareType = GetShareType(cdbl(ShareType,0));
-                std::string TitleNarr = "Poll #" + RoundToString((double)iPollNumber,0)
+                std::string TitleNarr = "Poll #" + RoundToString(iPollNumber,0)
                                         + " (" + ExpirationDate + " ) - " + sShareType;
 
                 entry.push_back(Pair(TitleNarr,Title));
@@ -3553,8 +3553,8 @@ Array GetUpgradedBeaconReport()
         iBeaconCount++;
     }
 
-    entry.push_back(Pair("Total Beacons",(double)iBeaconCount));
-    entry.push_back(Pair("Upgraded Beacon Count",(double)iUpgradedBeaconCount));
+    entry.push_back(Pair("Total Beacons",iBeaconCount));
+    entry.push_back(Pair("Upgraded Beacon Count",iUpgradedBeaconCount));
     double dPct = ((double)iUpgradedBeaconCount / ((double)iBeaconCount) + .01);
     entry.push_back(Pair("Pct Of Upgraded Beacons",RoundToString(dPct*100,3)));
     results.push_back(entry);
@@ -3650,7 +3650,7 @@ Array GetJSONNeuralNetworkReport()
                 {
                     row = neural_hash + "," + RoundToString(popularity,0);
                     report += row + "\r\n";
-                    pct = (((double)popularity)/(votes+.01))*100;
+                    pct = (popularity/(votes+.01))*100;
                     entry.push_back(Pair(neural_hash,RoundToString(popularity,0) + "; " + RoundToString(pct,2) + "%"));
                 }
       }
@@ -3703,7 +3703,7 @@ Array GetJSONCurrentNeuralNetworkReport()
                 {
                     row = neural_hash + "," + RoundToString(popularity,0);
                     report += row + "\r\n";
-                    pct = (((double)popularity)/(votes+.01))*100;
+                    pct = ((popularity)/(votes+.01))*100;
                     entry.push_back(Pair(neural_hash,RoundToString(popularity,0) + "; " + RoundToString(pct,2) + "%"));
                 }
       }
@@ -4156,11 +4156,11 @@ Value listitem(const Array& params, bool fHelp)
 	else if (sitem == "seefile")
 	{
 		// This is a unit test to prove viability of transmitting a file from node to node
-		std::string sFile = "C:\\test.txt";
+        std::string sFile = "C:\\test.txt";
         std::vector<unsigned char> v = readFileToVector(sFile);
 		Object entry;
 	    entry.push_back(Pair("byte1",v[1]));
-        entry.push_back(Pair("bytes",(double)v.size()));
+        entry.push_back(Pair("bytes",v.size()));
         for (unsigned int i = 0; i < v.size(); i++)
 		{
 			entry.push_back(Pair("bytes",v[i]));
