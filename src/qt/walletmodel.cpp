@@ -227,8 +227,8 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
                 continue;
 
             std::string sMessageAddress = CBitcoinAddress(rcp.address.toStdString()).ToString();
-            std::string sMK = sMessageAddress.substr(sMessageAddress.length() - 3, 3);
-            messages += "<" + sMK + ">" + MakeSafeMessage(FromQStringW(rcp.Message)) + "</" + sMK + ">";
+            std::string sMsgKey = sMessageAddress.substr(sMessageAddress.length() - 3, 3);
+            messages += "<" + sMsgKey + ">" + MakeSafeMessage(FromQStringW(rcp.Message)) + "</" + sMsgKey + ">";
         }
 
         CWalletTx wtx;
