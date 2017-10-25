@@ -215,14 +215,20 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
 
         // Sendmany
         std::vector<std::pair<CScript, int64_t> > vecSend;
-		foreach(const SendCoinsRecipient &rcp, recipients)
+
+        foreach(const SendCoinsRecipient &rcp, recipients)
         {
             CScript scriptPubKey;
+
             scriptPubKey.SetDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
             vecSend.push_back(make_pair(scriptPubKey, rcp.amount));
-            std::string smessage = MakeSafeMessage(FromQStringW(rcp.Message));
-            messages += "<MESSAGE>" + smessage + "</MESSAGE>";
 
+            if (rcp.Message.isEmpty())
+                continue;
+
+            std::string sMessageAddress = CBitcoinAddress(rcp.address.toStdString()).ToString();
+            std::string sMK = sMessageAddress.substr(sMessageAddress.length() - 3, 3);
+            messages += "<" + sMK + ">" + MakeSafeMessage(FromQStringW(rcp.Message)) + "</" + sMK + ">";
         }
 
         CWalletTx wtx;

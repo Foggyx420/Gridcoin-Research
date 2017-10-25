@@ -113,8 +113,28 @@ std::vector<std::pair<std::string, std::string>> GetTxNormalBoincHashInfo(const 
             res.push_back(std::make_pair(_("Message Length"), ToString(msg.length())));
 
         std::string sMessageType = ExtractXML(msg, "<MT>", "</MT>");
-        std::string sTxMessage = ExtractXML(msg, "<MESSAGE>", "</MESSAGE>");
+        std::string sTxMessage = ExtractXML(msg, "<MESSAGE>", "</MESSAGE>"); // Support old formating of messages; Old Messages can be viewed this way.
         std::string sRainMessage = ExtractXML(msg, "<NARR>", "</NARR>");
+
+        // New message support
+        for (const auto& vVout : mtx.vout)
+        {
+            CTxDestination address;
+
+            if (ExtractDestination(vVout.scriptPubKey, address))
+            {
+                if (IsMine(*pwalletMain, vVout.scriptPubKey))
+                {
+                    std::string sMsgAddr = CBitcoinAddress(address).ToString();
+                    std::string sMsgKey = sMsgAddr.substr(sMsgAddr.length() - 3, 3);
+
+                    if (!sTxMessage.empty())
+                        sTxMessage += "; ";
+
+                    sTxMessage += ExtractXML(msg, "<" + sMsgKey + ">", "</" + sMsgKey + ">");
+                }
+            }
+        }
 
         if (sMessageType.length())
         {
