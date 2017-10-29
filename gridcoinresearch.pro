@@ -273,8 +273,8 @@ HEADERS += src/qt/bitcoingui.h \
     src/boinc.h \
     src/qt/diagnosticsdialog.h \
     src/backup.h \
-    src/appcache.h
-
+    src/appcache.h \
+    src/compress.h
 
 SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/qt/transactiontablemodel.cpp \
@@ -353,7 +353,8 @@ SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/boinc.cpp \
     src/allocators.cpp \
     src/backup.cpp \
-    src/appcache.cpp
+    src/appcache.cpp \
+    src/compress.cpp
 
 ##
 #RC_FILE  = qaxserver.rc
