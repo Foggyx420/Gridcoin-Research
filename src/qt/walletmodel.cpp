@@ -8,6 +8,7 @@
 #include "wallet.h"
 #include "base58.h"
 #include "util.h"
+#include "compress.h"
 
 #include <QSet>
 #include <QTimer>
@@ -218,11 +219,21 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
 		foreach(const SendCoinsRecipient &rcp, recipients)
         {
             CScript scriptPubKey;
+
             scriptPubKey.SetDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
             vecSend.push_back(make_pair(scriptPubKey, rcp.amount));
-            std::string smessage = MakeSafeMessage(FromQStringW(rcp.Message));
-            messages += "<MESSAGE>" + smessage + "</MESSAGE>";
 
+            if (rcp.Message.isEmpty())
+                continue;
+
+            std::string sMessageAddress = CBitcoinAddress(rcp.address.toStdString()).ToString();
+            std::string sMsgKey = sMessageAddress.substr(sMessageAddress.length() - 3, 3);
+            std::string sMessage = MakeSafeMessage(FromQStringW(rcp.Message));
+            std::string sCmpMsg;
+
+            CompressTxMessage(sMessage, sCmpMsg);
+
+            messages += "<" + sMsgKey + ">" + sCmpMsg + "</" + sMsgKey + ">";
         }
 
         CWalletTx wtx;

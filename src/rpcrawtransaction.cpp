@@ -14,6 +14,8 @@
 #include "wallet.h"
 #include "upgrader.h"
 #include "ui_interface.h"
+#include "compress.h"
+
 using namespace std;
 using namespace boost;
 using namespace boost::assign;
@@ -115,6 +117,30 @@ std::vector<std::pair<std::string, std::string>> GetTxNormalBoincHashInfo(const 
         std::string sMessageType = ExtractXML(msg, "<MT>", "</MT>");
         std::string sTxMessage = ExtractXML(msg, "<MESSAGE>", "</MESSAGE>");
         std::string sRainMessage = ExtractXML(msg, "<NARR>", "</NARR>");
+
+        // New compressed message support
+        for (const auto& vVout : mtx.vout)
+        {
+            CTxDestination address;
+
+            if (ExtractDestination(vVout.scriptPubKey, address) && IsMine(*pwalletMain, vVout.scriptPubKey))
+            {
+                std::string sMsgAddr = CBitcoinAddress(address).ToString();
+                std::string sMsgKey = sMsgAddr.substr(sMsgAddr.length() - 3, 3);
+                std::string sCmpMsg = ExtractXML(msg, "<" + sMsgKey + ">", "</" + sMsgKey + ">");
+                std::string sDCmpMsg;
+
+                if (sCmpMsg.empty())
+                    continue;
+
+                DecompressTxMessage(sCmpMsg, sDCmpMsg);
+
+                if (!sTxMessage.empty())
+                    sTxMessage += "; ";
+
+                sTxMessage += sDCmpMsg;
+            }
+        }
 
         if (sMessageType.length())
         {
