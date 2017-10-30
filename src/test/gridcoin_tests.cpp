@@ -2,6 +2,7 @@
 #include "uint256.h"
 #include "util.h"
 #include "main.h"
+#include "compress.h"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/algorithm/hex.hpp>
@@ -129,5 +130,31 @@ BOOST_AUTO_TEST_CASE(gridcoin_V8ShouldBeEnabledOnBlock312000InTestnet)
     fTestNet = was_testnet;
 }
 
+BOOST_AUTO_TEST_CASE(gridcoin_MessageCompression)
+{
+    std::string sTestMsgA = "The gridcoin community has continued to grow since the beginning of the release of the first client.";
+    std::string sTestMsgB = "The community dev team continues to fix and improve the gridcon client.";
+    std::string sTestMsgC = "Message compression will save 20% to in some cases over 50% in space. This not only saves space in the block chain but also allows more messages or rather longer messages to be stored.";
+    std::string sTestMsgD = "This unit test will verify wheather or not (de)compression works.";
+    std::string sResultA;
+    std::string sResultB;
+    std::string sResultC;
+    std::string sResultD;
+    std::string sResult;
+
+    CompressTxMessage(sTestMsgA, sResult);
+    DecompressTxMessage(sResult, sResultA);
+    CompressTxMessage(sTestMsgB, sResult);
+    DecompressTxMessage(sResult, sResultB);
+    CompressTxMessage(sTestMsgC, sResult);
+    DecompressTxMessage(sResult, sResultC);
+    CompressTxMessage(sTestMsgD, sResult);
+    DecompressTxMessage(sResult, sResultD);
+
+    BOOST_CHECK_EQUAL(sTestMsgA, sResultA);
+    BOOST_CHECK_EQUAL(sTestMsgB, sResultB);
+    BOOST_CHECK_EQUAL(sTestMsgC, sResultC);
+    BOOST_CHECK_EQUAL(sTestMsgD, sResultD);
+}
 BOOST_AUTO_TEST_SUITE_END()
 
