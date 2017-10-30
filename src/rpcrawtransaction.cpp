@@ -123,7 +123,7 @@ std::vector<std::pair<std::string, std::string>> GetTxNormalBoincHashInfo(const 
         {
             CTxDestination address;
 
-            if (ExtractDestination(vVout.scriptPubKey, address) && IsMine(*pwalletMain, vVout.scriptPubKey))
+            if (ExtractDestination(vVout.scriptPubKey, address) && (IsMine(*pwalletMain, vVout.scriptPubKey) || pwalletMain->IsFromMe(mtx)))
             {
                 std::string sMsgAddr = CBitcoinAddress(address).ToString();
                 std::string sMsgKey = sMsgAddr.substr(sMsgAddr.length() - 3, 3);
