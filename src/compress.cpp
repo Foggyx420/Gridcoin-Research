@@ -215,7 +215,7 @@ void CompressTxMessage(const std::string& sMessage, std::string& sReturnCompress
     if (sMessage.empty())
         return;
 
-    char out[4096];
+    char out[32767];
     int comprlen;
     const char *string = sMessage.c_str();
 
@@ -231,7 +231,7 @@ void DecompressTxMessage(const std::string& sMessage, std::string& sReturnDecomp
     if (sMessage.empty())
         return;
 
-    char out[4096];
+    char out[32767];
     int decomprlen;
     const char *string = sMessage.c_str();
 

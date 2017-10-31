@@ -84,7 +84,6 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
 	
     LOCK2(cs_main, wallet->cs_wallet);
 
-    strHTML.reserve(9250);
     strHTML += "<html><font face='verdana, arial, helvetica, sans-serif'>";
 
     int64_t nTime = wtx.GetTxTime();
