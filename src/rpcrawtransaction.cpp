@@ -399,6 +399,7 @@ Value downloadblocks(const Array& params, bool fHelp)
             "Downloads blockchain to bootstrap client.\n"
             "{}");
 
+#if defined(WIN32)
         if (!upgrader.setTarget(BLOCKS))
         {
             throw runtime_error("Upgrader already busy\n");
@@ -412,6 +413,9 @@ Value downloadblocks(const Array& params, bool fHelp)
             #endif
             return "Initiated download of blockchain";
         }
+#else
+        return "Download of blockchain available on windows platform only";
+#endif
 }
 
 
