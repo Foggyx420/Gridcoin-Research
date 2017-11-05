@@ -625,9 +625,11 @@ void BitcoinGUI::createActions()
     rebuildAction->setStatusTip(tr("Rebuild Block Chain"));
     rebuildAction->setMenuRole(QAction::TextHeuristicRole);
 
+#if defined(WIN32)
     downloadAction = new QAction(QIcon(":/icons/bitcoin"), tr("&Download Blocks"), this);
     downloadAction->setStatusTip(tr("Download Blocks"));
     downloadAction->setMenuRole(QAction::TextHeuristicRole);
+#endif
 
     upgradeAction = new QAction(QIcon(":/icons/bitcoin"), tr("&Upgrade Client"), this);
     upgradeAction->setStatusTip(tr("Upgrade Client"));
