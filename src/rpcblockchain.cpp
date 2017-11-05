@@ -139,7 +139,6 @@ int ReindexWallet();
 extern Array MagnitudeReportCSV(bool detail);
 std::string getfilecontents(std::string filename);
 int CreateRestorePoint();
-int DownloadBlocks();
 double LederstrumpfMagnitude2(double mag,int64_t locktime);
 bool IsCPIDValidv2(MiningCPID& mc, int height);
 std::string RetrieveMd5(std::string s1);
@@ -2347,15 +2346,6 @@ Value execute(const Array& params, bool fHelp)
             entry.push_back(Pair("Reindex Chain",r));
             results.push_back(entry);
     }
-    else if (sItem == "downloadblocks")
-    {
-            int r=-1;
-            #if defined(WIN32) && defined(QT_GUI)
-                r = DownloadBlocks();
-            #endif 
-            entry.push_back(Pair("Download Blocks",r));
-            results.push_back(entry);
-    }
     else if (sItem == "getnextproject")
     {
             GetNextProject(true);
@@ -2461,9 +2451,6 @@ Value execute(const Array& params, bool fHelp)
         entry.push_back(Pair("execute debug10 <true/false>", "Turn on/off debug10 messages on the fly"));
         entry.push_back(Pair("execute debugnew <true/false>", "Turn on/off debugnet messages on the fly"));
         entry.push_back(Pair("execute decryptphrase <phrase>", "Decrypt an encrypted phrase"));
-        #if defined(WIN32) && defined(QT_GUI)
-        entry.push_back(Pair("execute downloadblocks", "Download blocks from blockchain"));
-        #endif
         entry.push_back(Pair("execute dportally", "Tally magnitudes in superblock"));
         entry.push_back(Pair("execute encrypt <phrase>", "Encrypt a wallet pass phrase (autounlock feature)"));
         entry.push_back(Pair("execute encryptphrase <phrase>", "Encrypt a phrase or message"));
