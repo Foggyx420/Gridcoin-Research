@@ -349,6 +349,8 @@ void DiagnosticsDialog::getGithubVersionFinished(QNetworkReply *reply) {
             else
                 printf("DBG : newVersionJVal is Undefined\n");
         }
+        else
+            printf("DBG : object is empty!\n");
 
         std::vector<std::string> newVersionStringSplit;
         boost::algorithm::split(newVersionStringSplit, newVersionString, boost::is_any_of("-"));
