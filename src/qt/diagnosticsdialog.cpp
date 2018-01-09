@@ -337,9 +337,11 @@ void DiagnosticsDialog::getGithubVersionFinished(QNetworkReply *reply) {
     {
         QByteArray data;
         data = reply->readAll();
+        printf("DBG : data size %lu\n", data.size());
         std::string newVersionString;
 
         QJsonDocument replyJson = QJsonDocument::fromJson(data);
+        printf("DBG : replyJSON size = %lu\n", replyJson.object().size());
         QJsonObject obj = replyJson.object();
         if(!obj.empty()) {
             QJsonValue newVersionJVal = obj.value("tag_name");
