@@ -342,7 +342,7 @@ void DiagnosticsDialog::getGithubVersionFinished(QNetworkReply *reply) {
         QJsonDocument replyJson = QJsonDocument::fromJson(data);
         QJsonObject obj = replyJson.object();
         if(!obj.empty()) {
-            QJsonValue newVersionJVal = obj.value("name");
+            QJsonValue newVersionJVal = obj.value("tag_name");
             if(!newVersionJVal.isUndefined()) {
                 newVersionString = newVersionJVal.toString().toStdString();
             }
@@ -352,9 +352,9 @@ void DiagnosticsDialog::getGithubVersionFinished(QNetworkReply *reply) {
         else
             printf("DBG : object is empty!\n");
 
-        std::vector<std::string> newVersionStringSplit;
-        boost::algorithm::split(newVersionStringSplit, newVersionString, boost::is_any_of("-"));
-        newVersionString = newVersionStringSplit.at(0);
+//        std::vector<std::string> newVersionStringSplit;
+//        boost::algorithm::split(newVersionStringSplit, newVersionString, boost::is_any_of("-"));
+//        newVersionString = newVersionStringSplit.at(0);
         printf("DBG : New version string is %s\n", newVersionString.c_str());
 
         std::string currentVersionString = FormatFullVersion();
