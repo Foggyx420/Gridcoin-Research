@@ -367,9 +367,13 @@ void DiagnosticsDialog::getGithubVersionFinished(QNetworkReply *reply) {
 
         int iNew;
         int iCurrent;
+
+        printf("DBG : Size = %lu/%lu\n", currentVersionList.size(), newVersionList.size());
         for(unsigned int i=0; i<newVersionList.size(); i++) {
             iNew = std::stoi(newVersionList.at(i), nullptr, 10);
+            printf("DBG : iNew %d\n", iNew);
             iCurrent = std::stoi(currentVersionList.at(i), nullptr, 10);
+            printf("DBG : iCurrent %d\n", iCurrent);
             if(iNew > iCurrent) {
                 ui->checkClientVersionResultLbl->setText("Failed (An update is available, please update)");
                 return;
