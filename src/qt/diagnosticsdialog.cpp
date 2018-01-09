@@ -351,6 +351,7 @@ void DiagnosticsDialog::getGithubVersionFinished(QNetworkReply *reply) {
         std::vector<std::string> newVersionStringSplit;
         boost::algorithm::split(newVersionStringSplit, newVersionString, boost::is_any_of("-"));
         newVersionString = newVersionStringSplit.at(0);
+        printf("DBG : New version string is %s\n", newVersionString.c_str());
 
         std::string currentVersionString = FormatFullVersion();
         std::vector<std::string> currentVersionStringSplit;
