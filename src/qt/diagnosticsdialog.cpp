@@ -5,11 +5,15 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/exception/error_info.hpp>
 
 #include "diagnosticsdialog.h"
 #include "ui_diagnosticsdialog.h"
 
 #include <numeric>
+
+struct tag_errno;
+typedef boost::error_info<tag_errno,int> errno_info;
 
 std::string GetListOf(std::string datatype);
 
@@ -329,46 +333,62 @@ void DiagnosticsDialog::getGithubVersionFinished(QNetworkReply *reply) {
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     ui->checkClientVersionResultLbl->setText("N/A");
 #else
-    QByteArray data;
-    data = reply->readAll();
-    std::string newVersionString;
+    try
+    {
+        QByteArray data;
+        data = reply->readAll();
+        std::string newVersionString;
 
-    QJsonDocument replyJson = QJsonDocument::fromJson(data);
-    QJsonObject obj = replyJson.object();
-    if(!obj.empty()) {
-        QJsonValue newVersionJVal = obj.value("name");
-        if(!newVersionJVal.isUndefined()) {
-            newVersionString = newVersionJVal.toString().toStdString();
+        QJsonDocument replyJson = QJsonDocument::fromJson(data);
+        QJsonObject obj = replyJson.object();
+        if(!obj.empty()) {
+            QJsonValue newVersionJVal = obj.value("name");
+            if(!newVersionJVal.isUndefined()) {
+                newVersionString = newVersionJVal.toString().toStdString();
+            }
+        }
+
+        std::vector<std::string> newVersionStringSplit;
+        boost::algorithm::split(newVersionStringSplit, newVersionString, boost::is_any_of("-"));
+        newVersionString = newVersionStringSplit.at(0);
+
+        std::string currentVersionString = FormatFullVersion();
+        std::vector<std::string> currentVersionStringSplit;
+        boost::algorithm::split(currentVersionStringSplit, currentVersionString, boost::is_any_of("-"));
+        currentVersionString = currentVersionStringSplit.at(0);
+        boost::algorithm::split(currentVersionStringSplit, currentVersionString, boost::is_any_of("v"));
+        currentVersionString = currentVersionStringSplit.at(1);
+
+        std::vector<std::string> currentVersionList;
+        std::vector<std::string> newVersionList;
+
+        boost::algorithm::split(currentVersionList, currentVersionString, boost::is_any_of("."));
+        boost::algorithm::split(newVersionList, newVersionString, boost::is_any_of("."));
+
+        int iNew;
+        int iCurrent;
+        for(unsigned int i=0; i<newVersionList.size(); i++) {
+            iNew = std::stoi(newVersionList.at(i), nullptr, 10);
+            iCurrent = std::stoi(currentVersionList.at(i), nullptr, 10);
+            if(iNew > iCurrent) {
+                ui->checkClientVersionResultLbl->setText("Failed (An update is available, please update)");
+                return;
+            } else
+                ui->checkClientVersionResultLbl->setText("Up to date");
         }
     }
 
-    std::vector<std::string> newVersionStringSplit;
-    boost::algorithm::split(newVersionStringSplit, newVersionString, boost::is_any_of("-"));
-    newVersionString = newVersionStringSplit.at(0);
-
-    std::string currentVersionString = FormatFullVersion();
-    std::vector<std::string> currentVersionStringSplit;
-    boost::algorithm::split(currentVersionStringSplit, currentVersionString, boost::is_any_of("-"));
-    currentVersionString = currentVersionStringSplit.at(0);
-    boost::algorithm::split(currentVersionStringSplit, currentVersionString, boost::is_any_of("v"));
-    currentVersionString = currentVersionStringSplit.at(1);
-
-    std::vector<std::string> currentVersionList;
-    std::vector<std::string> newVersionList;
-
-    boost::algorithm::split(currentVersionList, currentVersionString, boost::is_any_of("."));
-    boost::algorithm::split(newVersionList, newVersionString, boost::is_any_of("."));
-
-    int iNew;
-    int iCurrent;
-    for(unsigned int i=0; i<newVersionList.size(); i++) {
-        iNew = std::stoi(newVersionList.at(i), nullptr, 10);
-        iCurrent = std::stoi(currentVersionList.at(i), nullptr, 10);
-        if(iNew > iCurrent) {
-            ui->checkClientVersionResultLbl->setText("Failed (An update is available, please update)");
-            return;
-        } else
-            ui->checkClientVersionResultLbl->setText("Up to date");
+    catch (std::exception &error)
+    {
+        ui->checkClientVersionResultLbl->setText("Failed with std::exception " + QString::fromStdString(error.what()));
+    }
+    catch (boost::exception &error)
+    {
+        ui->checkClientVersionResultLbl->setText("Failed with boost::exception");
+    }
+    catch (...)
+    {
+        ui->checkClientVersionResultLbl->setText("Failed with unknown error");
     }
 #endif
 }
