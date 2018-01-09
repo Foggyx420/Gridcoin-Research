@@ -346,6 +346,8 @@ void DiagnosticsDialog::getGithubVersionFinished(QNetworkReply *reply) {
             if(!newVersionJVal.isUndefined()) {
                 newVersionString = newVersionJVal.toString().toStdString();
             }
+            else
+                printf("DBG : newVersionJVal is Undefined\n");
         }
 
         std::vector<std::string> newVersionStringSplit;
