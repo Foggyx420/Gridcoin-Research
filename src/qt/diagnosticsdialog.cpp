@@ -20,9 +20,6 @@ DiagnosticsDialog::DiagnosticsDialog(QWidget *parent) :
     ui(new Ui::DiagnosticsDialog)
 {
     ui->setupUi(this);
-
-    networkManager = new QNetworkAccessManager(this);
-    connect(networkManager, SIGNAL(finished(QNetworkReply *)), this, SLOT(getGithubVersionFinished(QNetworkReply *)));
 }
 
 DiagnosticsDialog::~DiagnosticsDialog()
@@ -259,6 +256,8 @@ void DiagnosticsDialog::on_testBtn_clicked() {
     DiagnosticsDialog::VerifyTCPPort();
     //client version
     ui->checkClientVersionResultLbl->setText("Testing...");
+    networkManager = new QNetworkAccessManager(this);
+    connect(networkManager, SIGNAL(finished(QNetworkReply *)), this, SLOT(getGithubVersionFinished(QNetworkReply *)));
     networkManager->get(QNetworkRequest(QUrl("https://api.github.com/repos/gridcoin/Gridcoin-Research/releases/latest")));
 
 }
@@ -326,6 +325,11 @@ void DiagnosticsDialog::TCPFailed(QAbstractSocket::SocketError socket) {
 }
 
 void DiagnosticsDialog::getGithubVersionFinished(QNetworkReply *reply) {
+    if (reply->error())
+    {
+        printf("DD::GGVF : error %s\n", qPrintable(reply->errorString()));
+        return;
+    }
     QByteArray data;
     data = reply->readAll();
     std::string newVersionString;
