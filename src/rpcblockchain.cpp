@@ -1358,7 +1358,10 @@ Value execute(const Array& params, bool fHelp)
             vector<pair<CScript, int64_t> > vecSend;
             std::string sRecipients = params[1].get_str();
             std::string sRainCommand = ExtractXML(sRecipients,"<RAIN>","</RAIN>");
-            std::string sRainMessage = MakeSafeMessage(ExtractXML(sRecipients,"<RAINMESSAGE>","</RAINMESSAGE>"));
+            std::string xRainMessage = ExtractXML(sRecipients,"<RAINMESSAGE>","</RAINMESSAGE>");
+            if (xRainMessage.length() > 1000)
+                xRainMessage = xRainMessage.substr(0,999);
+            std::string sRainMessage = MakeSafeMessage(xRainMessage);
             std::string sRain = "<NARR>Project Rain: " + sRainMessage + "</NARR>";
             if (!sRainCommand.empty()) sRecipients = sRainCommand;
             wtx.hashBoinc = sRain;

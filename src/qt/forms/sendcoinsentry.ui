@@ -160,7 +160,13 @@
         <bool>true</bool>
        </property>
        <property name="toolTip">
-        <string>Send Custom Message to a Gridcoin Recipient</string>
+        <string>Send Custom Message to a Gridcoin Recipient (1000 character max)</string>
+       </property>
+       <property name="maxLength">
+        <number>1000</number>
+       </property>
+       <property name="placeholderText">
+        <string>Send Custom Message to a Gridcoin Recipient (1000 character max)</string>
        </property>
       </widget>
      </item>
