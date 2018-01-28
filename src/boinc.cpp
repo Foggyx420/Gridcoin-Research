@@ -57,6 +57,9 @@ std::string GetBoincDataDir(){
     if (boost::filesystem::exists("/var/lib/boinc-client/")){
         return "/var/lib/boinc-client/";
     }
+    // Linux nodes; avoid no boinc data dir not found if node is for network support only
+    if (!QT_GUI && GetArgument("email", "") == "")
+        return "";
     #endif
 
     #ifdef __APPLE__
