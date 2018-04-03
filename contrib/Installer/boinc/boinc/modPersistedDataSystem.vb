@@ -230,7 +230,7 @@ Module modPersistedDataSystem
 
             'If total nework magnitude is greater then 1% tolerance of 115000 then don't form
             'a contract with out of bounds magnitudes.
-            If lTotal >= (115000 * 0.01) Then
+            If lTotal >= (115000 * 1.01) Then
                 Log("Total Network Magnitude exceeds limits in contract: " + lTotal.ToString)
                 Return "<ERROR>Superblock Total Network Magnitude " + Trim(lTotal) + " out of bounds</ERROR>"
             End If
@@ -894,14 +894,15 @@ Module modPersistedDataSystem
 
             'Thread.Join
             For x As Integer = 1 To 120
-                If mlQueue = 0 Then Exit For
+                If mlQueue < 0 Then Log("Warning: mlQueue is less then zero")
+                If mlQueue <= 0 Then Exit For
                 GuiDoEvents()
                 Threading.Thread.Sleep(200)
                 mlPercentComplete -= 1
                 If mlPercentComplete < 10 Then mlPercentComplete = 10
             Next
             Dim lNoWitnesses As Long = CPIDCountWithNoWitnesses()
-            If mlQueue = 0 And lNoWitnesses = 0 Then Exit For Else Log(Trim(lNoWitnesses) + " CPIDs remaining with no witnesses.  Cleaning up problem.")
+            If lNoWitnesses = 0 Then Exit For Else Log(Trim(lNoWitnesses) + " CPIDs remaining with no witnesses.  Cleaning up problem.")
         Next z
 
         Try
