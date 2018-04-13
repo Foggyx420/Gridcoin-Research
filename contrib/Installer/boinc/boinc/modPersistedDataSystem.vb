@@ -387,9 +387,9 @@ Module modPersistedDataSystem
             Dim lstProjects As List(Of Row) = GetList(surrogateRow, "*")
             Dim lstProjectCPIDs As List(Of Row)
             Dim units As Double = 0
+            'Tally all of the RAC in this project
+            'Get the RAC container
             For Each prj As Row In lstProjects
-                'Tally all of the RAC in this project
-                'Get the RAC container
                 surrogateRow = New Row
                 surrogateRow.Database = "Project"
                 surrogateRow.Table = prj.PrimaryKey + "cpid"
@@ -859,6 +859,7 @@ Module modPersistedDataSystem
         Log("Updating Magnitudes " + IIf(bConsensus, "With consensus data", "Without consensus data"))
         Dim lStartingWitnesses As Long = CPIDCountWithNoWitnesses()
         Log(Trim(lStartingWitnesses) + " CPIDs starting out with clean slate.")
+        Dim bWitnessComplete As Boolean = False
 
         For z As Integer = 1 To 5
             Dim iRow As Long = 0
@@ -869,7 +870,11 @@ Module modPersistedDataSystem
                 surrogateRow.Table = "CPIDS"
                 lstCPIDs = GetList(surrogateRow, "*")
                 lstCPIDs.Sort(Function(x, y) x.PrimaryKey.CompareTo(y.PrimaryKey))
-                mlQueue = 0
+                Dim mlLock As New Object
+                If mlQueue > 0 Then Log("Warning: Reiterating through cpids due to some CPIDS having no witness but mlQueue is not zero as expected: " + mlQueue.ToString)
+                SyncLock mlLock
+                    mlQueue = 0
+                End SyncLock
                 For Each cpid As Row In lstCPIDs
                     Try
 
@@ -882,7 +887,7 @@ Module modPersistedDataSystem
                         Dim p As Double = (iRow / (lstCPIDs.Count + 0.01)) * 100
                         mlPercentComplete = p + 5
                         If mlPercentComplete > 90 Then mlPercentComplete = 90
-                        'Log(Trim(mlPercentComplete) + "%: #" + Trim(iRow) + ", Gathering Magnitude for CPID " + cpid.PrimaryKey + ", RAC: " + Trim(cpid.RAC))
+                        Log(Trim(mlPercentComplete) + "%: #" + Trim(iRow) + ", Gathering Magnitude for CPID " + cpid.PrimaryKey + ", RAC: " + Trim(cpid.RAC))
                     Catch ex As Exception
                         Log("Error in UpdateMagnitudes: " + ex.Message + " while processing CPID " + Trim(cpid.PrimaryKey))
                     End Try
@@ -893,16 +898,44 @@ Module modPersistedDataSystem
             End Try
 
             'Thread.Join
+ThreadSleep:
             For x As Integer = 1 To 120
-                If mlQueue < 0 Then Log("Warning: mlQueue is less then zero")
-                If mlQueue <= 0 Then Exit For
+                If mlQueue = 0 Then Exit For
                 GuiDoEvents()
                 Threading.Thread.Sleep(200)
                 mlPercentComplete -= 1
                 If mlPercentComplete < 10 Then mlPercentComplete = 10
             Next
+            'If queue is 0 and the count in question is 0 we exit the loop
             Dim lNoWitnesses As Long = CPIDCountWithNoWitnesses()
-            If lNoWitnesses = 0 Then Exit For Else Log(Trim(lNoWitnesses) + " CPIDs remaining with no witnesses.  Cleaning up problem.")
+            If mlQueue = 0 And lNoWitnesses = 0 Then
+                Exit For
+                'If mlqueue is less then 0 handle the situation
+            ElseIf mlQueue < 0 Then
+                If lNoWitnesses = 0 Then
+                    Log("Warning: mlQueue is negative but no CPIDs with no witnesses exist! Undefined behavour with neural contract may arise. Exiting and continuing")
+                    Exit For
+                Else
+                    For r As Integer = 1 To 5
+                        Log("Warning: mlQueue is negative but some CPIDs have no witnesses! Undefined behavour with neural contract may arise. Sleeping to try to rectify problem before re-run #" + r.ToString + "/5")
+                        GoTo ThreadSleep
+                    Next r
+                End If
+                'If mlQueue > 0 then handle this as well
+            ElseIf mlQueue > 0 Then
+                If lNoWitnesses = 0 Then
+                    For r As Integer = 1 To 5
+                        Log("No CPIDs remaining with no witnesses, but mlQueue persists with " + mlQueue.ToString + ". Sleeping to rectify problem #" + r.ToString + "/5")
+                        GoTo ThreadSleep
+                    Next r
+                Else
+                    For r As Integer = 1 To 5
+                        Log("Warning: " + lNoWitnesses.ToString + " CPIDs remaining with no witnesses and mlQueue persists with " + mlQueue.ToString + ". Sleeping to rectify problem #" + r.ToString + "/5")
+                        GoTo ThreadSleep
+                    Next r
+                End If
+            End If
+
         Next z
 
         Try
@@ -1123,7 +1156,10 @@ TryAgain:
             Threading.ThreadPool.QueueUserWorkItem(AddressOf ThreadGetRac, oNeuralType)
 
 ThreadStarted:
-            mlQueue += 1
+            Dim mlLock As New Object
+            SyncLock mlLock
+                mlQueue += 1
+            End SyncLock
             If lCatastrophicFailures > 0 Then
                 Log("Successfully recovered from catastrophic failures.")
             End If
@@ -1165,7 +1201,10 @@ ThreadStarted:
                 Log("Attempt # " + Trim(x) + ": Error in ThreadGetRAC : " + ex.Message + ", Trying again.")
             End Try
         Next x
-        mlQueue -= 1
+        Dim mlLock As New Object
+        SyncLock mlLock
+            mlQueue -= 1
+        End SyncLock
     End Sub
     Public Function GetSupermajorityVoteStatus(sCPID As String, lMinimumWitnessesRequired As Long) As Boolean
         If mdictNeuralNetworkQuorumData Is Nothing Then Return False
