@@ -133,6 +133,8 @@ Public Class Utilization
         Return CalcMd5(s)
     End Function
     Public Function GetNeuralHash() As String
+        ' Verify that when a superblock is needed that we have least synced once before we pass a neural hash
+        ' This avoid a small window frame (up to at most 9 blocks) where old contract hash or contract can be voted/staked before a sync has taken place.
         If Len(msCurrentNeuralHash) > 1 Then Return msCurrentNeuralHash 'This is invalidated when it changes
         Dim sContract As String = GetMagnitudeContract()
         '7-25-2015 - Use Quorum Hashing algorithm to get the quorum hash 
@@ -149,6 +151,49 @@ Public Class Utilization
         ' End If
 
         Return sHash
+    End Function
+    Public Function IsDataCurrent(sSyncData As String) As Boolean
+        ' Support Older Neural Network versions as to not make this mandatory however change this when we do produce a mandatory
+        If sSyncData = "" Then Return True
+
+        Try
+            'Pull Sync data
+            Dim sData As String = ExtractXML(sSyncData, "<syncdata>", "</syncdata>")
+            Dim dAge As Double = Val(ExtractXML(sData, "<age>", "</age>"))
+            Dim dTimeOffset As Double = Val(ExtractXML(sData, "<offset>", "</offset>"))
+            Dim dTest As Double = Val(ExtractXML(sData, "<test>", "</test>"))
+
+            ' If testing from RPC calls then return true so the hash and contract can be passed back for diagnostics by devs
+            If dTest = 1 Then
+                Return True
+
+            Else
+                ' If superblock age is less then a day
+                ' If dAge < 86400 Then Return False
+
+                ' Pull information about the last sync that occured in the neural network
+                Dim r As Row = GetDataValue("Historical", "Magnitude", "LastTimeSynced")
+                Dim sLTS As String = Trim(r.Synced)
+                Dim format() = {"d/MM/yyyy h:mm:ss tt"}
+                Dim dt As Date = Date.ParseExact(sLTS, format, System.Globalization.DateTimeFormatInfo.InvariantInfo, System.Globalization.DateTimeStyles.AdjustToUniversal)
+                Dim dLTS As Double = (dt - New Date(1970, 1, 1, 0, 0, 0)).TotalSeconds
+                Dim dLTSAge As Double = dLTS + dTimeOffset
+                Log("IsDataCurrent Debug: Last Time Synced " + Trim(sLTS) + " Superblock age " + dAge.ToString + " Time Offset " + dTimeOffset.ToString + " Time before offset " + dLTS.ToString + " Time after offset " + dLTSAge.ToString)
+                ' If last time synced is older then how long we been needing a superblock return false
+                If dLTSAge > (dAge - 86400) Then
+                    Return False
+
+                Else
+                    Return True
+                End If
+            End If
+
+        Catch ex As Exception
+            Log("IsDataCurrent: " + ex.Message)
+
+            Return False
+        End Try
+
     End Function
     Public Sub ExportToCSVFile()
         ExportToCSV2()
