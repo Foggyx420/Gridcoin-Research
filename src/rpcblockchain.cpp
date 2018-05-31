@@ -3693,3 +3693,14 @@ UniValue rpc_reorganize(const UniValue& params, bool fHelp)
     results.pushKV("RollbackChain",fResult);
     return results;
 }
+
+UniValue rpctest(const UniValue& params, bool fHelp)
+{
+    UniValue results(UniValue::VOBJ);
+    if (fHelp)
+        throw runtime_error("no");
+
+    double res = qtExecuteGenericFunction("IsDataCurrent()", params[0].get_str());
+    results.pushKV("results", res);
+    return results;
+}

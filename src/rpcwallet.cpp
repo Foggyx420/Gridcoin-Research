@@ -2099,6 +2099,9 @@ UniValue validateaddress(const UniValue& params, bool fHelp)
         CTxDestination dest = address.Get();
         string currentAddress = address.ToString();
         ret.pushKV("address", currentAddress);
+        CScript scriptPubKey;
+        scriptPubKey.SetDestination(address.Get());
+        ret.pushKV("scriptPubKey", HexStr(scriptPubKey.begin(), scriptPubKey.end()));
         bool fMine = IsMine(*pwalletMain, dest);
         ret.pushKV("ismine", fMine);
         if (fMine) {

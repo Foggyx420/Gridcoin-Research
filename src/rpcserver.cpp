@@ -443,6 +443,7 @@ static const CRPCCommand vRPCCommands[] =
     { "stop",                    &stop,                    true,   cat_network       },
     { "vote",                    &vote,                    false,  cat_network       },
     { "votedetails",             &votedetails,             true,   cat_network       },
+    { "rpctest",                 &rpctest,                 false,  cat_developer     },
 };
 
 CRPCTable::CRPCTable()
