@@ -42,4 +42,9 @@ namespace NN
     {
         return 0;
     }
+
+    bool ExecuteDotNetBoolFunction(const std::string& function, const std::string& data)
+    {
+        return true;
+    }
 }

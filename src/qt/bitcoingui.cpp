@@ -106,6 +106,7 @@ extern double qtPushGridcoinDiagnosticData(std::string data);
 
 extern std::string FromQString(QString qs);
 extern std::string qtExecuteDotNetStringFunction(std::string function, std::string data);
+extern bool qtExecuteDotNetBoolFunction(const std::string& function, const std::string& data);
 
 std::string ExecuteRPCCommand(std::string method, std::string arg1, std::string arg2);
 std::string ExecuteRPCCommand(std::string method, std::string arg1, std::string arg2, std::string arg3, std::string arg4, std::string arg5, std::string arg6);
@@ -354,6 +355,22 @@ double qtExecuteGenericFunction(std::string function, std::string data)
     return result;
 }
 
+bool qtExecuteDotNetBoolFunction(const std::string& function, const std::string& data)
+{
+    bool bResult = false;
+
+    if (!bGlobalcomInitialized)
+        return false;
+
+    #ifdef defined(WIN32) && defined(QT_GUI)
+        QString qsData = ToQstring(data);
+        std::sFunction = function + "(QString)";
+
+        bResult = globalcom->dynamicCall(sFunction.c_str(), qsData);
+    #endif
+
+    return bResult;
+}
 
 
 std::string qtExecuteDotNetStringFunction(std::string function, std::string data)

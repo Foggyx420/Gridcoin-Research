@@ -6,7 +6,7 @@ extern std::string qtGetNeuralHash(std::string data);
 extern std::string qtGetNeuralContract(std::string data);
 extern double qtExecuteGenericFunction(std::string function,std::string data);
 extern void qtSyncWithDPORNodes(std::string data);
-
+extern bool qtExecuteDotNetBoolFunction(const std::string& function, const std::string& data);
 
 namespace NN
 {
@@ -73,4 +73,6 @@ namespace NN
     std::string ExecuteDotNetStringFunction(std::string function, std::string data);
 
     int64_t IsNeuralNet();
+
+    bool ExecuteDotNetBoolFunction(const std::string& function, const std::string& data);
 }
