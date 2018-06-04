@@ -114,6 +114,7 @@ std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end
 
 extern std::string qtGetNeuralHash(std::string data);
 extern std::string qtGetNeuralContract(std::string data);
+extern int64_t qtGetContractAge();
 
 extern int64_t IsNeural();
 
@@ -442,6 +443,26 @@ std::string qtGetNeuralHash(std::string data)
     }
     #else
         return "?";
+    #endif
+}
+
+int64_t qtGetContractAge()
+{
+
+    #if defined(WIN32) && defined(QT_GUI)
+    try
+    {
+        if (!bGlobalcomInitialized)
+            return 0;
+
+        int64_t nResult = globalcom->dynamicCall("ContractAge()").toInt();
+
+        return nResult;
+    }
+    catch(...)
+    {
+        return 0;
+    }
     #endif
 }
 

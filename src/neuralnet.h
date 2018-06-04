@@ -6,7 +6,7 @@ extern std::string qtGetNeuralHash(std::string data);
 extern std::string qtGetNeuralContract(std::string data);
 extern double qtExecuteGenericFunction(std::string function,std::string data);
 extern void qtSyncWithDPORNodes(std::string data);
-
+extern int64_t qtGetContractAge();
 
 namespace NN
 {
@@ -41,7 +41,11 @@ namespace NN
     //! \return Current neural hash. This might be empty if no has has
     //! been calculated yet.
     //!
-    std::string GetNeuralHash();
+    #ifdef WIN32 && QT_GUI
+        std::string GetNeuralHash(bool bOverride = false);
+    #else
+        std::string GetNeuralHash();
+    #endif
 
     //!
     //! \brief Get the most recently updated neural network contract.
@@ -51,7 +55,11 @@ namespace NN
     //!
     //! \return Most recent neural contract if available.
     //!
-    std::string GetNeuralContract();
+    #ifdef WIN32 && QT_GUI
+        std::string GetNeuralContract(bool bOverride = false);
+    #else
+        std::string GetNeuralContract();
+    #endif
 
     //!
     //! \brief Enable/disable testnet in neural net.
@@ -73,4 +81,8 @@ namespace NN
     std::string ExecuteDotNetStringFunction(std::string function, std::string data);
 
     int64_t IsNeuralNet();
+
+    #ifdef WIN32 && QT_GUI
+        bool ContractAgeWithinBounds();
+    #endif
 }

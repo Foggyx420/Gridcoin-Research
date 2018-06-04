@@ -2,6 +2,7 @@
 #include "util.h"
 #include "version.h"
 #include "sync.h"
+#include "appcache.h"
 
 #include <boost/filesystem/path.hpp>
 #include <boost/algorithm/string.hpp>
@@ -21,6 +22,7 @@ extern double qtExecuteGenericFunction(std::string function,std::string data);
 extern std::string qtExecuteDotNetStringFunction(std::string function,std::string data);
 extern void qtSyncWithDPORNodes(std::string data);
 int64_t IsNeural();
+extern bool NeedASuperblock();
 
 // While transitioning to dotnet the NeuralNet implementation has been split
 // into 3 implementations; Win32 with Qt, Win32 without Qt and the rest.
@@ -39,14 +41,22 @@ namespace NN
         return std::to_string(CLIENT_VERSION_MINOR) + "." + std::to_string(neural_id);
     }
 
-    std::string GetNeuralHash()
+    std::string GetNeuralHash(bool bOverride)
     {
-        return qtGetNeuralHash("");
+        if (bOverride)
+            return qtGetNeuralHash("");
+
+        else
+            return ContractAgeWithinBounds() ? qtGetNeuralHash("") : "";
     }
 
-    std::string GetNeuralContract()
+    std::string GetNeuralContract(bool bOverride)
     {
-        return qtGetNeuralContract("");
+        if (bOverride)
+            return qtGetNeuralContract("");
+
+        else
+            return ContractAgeWithinBounds() ? qtGetNeuralContract("") : "";
     }
 
     bool SetTestnetFlag(bool onTestnet)
@@ -68,5 +78,41 @@ namespace NN
     int64_t IsNeuralNet()
     {
        return IsNeural();
+    }
+
+    bool ContractAgeWithinBounds()
+    {
+        if (!NeedASuperblock())
+            return true;
+
+        int64_t nSBTime = ReadCache("superblock", "magnitudes").timestamp;
+        int64_t nSBAge = GetAdjustedTime() - nSBTime;
+        int64_t nNNContractAge = qtGetContractAge();
+        int64_t nNNAge  = nNNContractAge + GetTimeOffset();
+        int64_t nSBAgeDiff = nSBAge - 86400;
+
+        if (fDebug10)
+            LogPrintf("ContractAgeWithinBounds(): NN contract age = %" PRId64, nNNAge);
+
+        if (nNNContractAge >= 1)
+            return (nSBAgeDiff > nNNAge) ? true : false;
+
+        else if (nNNContractAge == 0)
+            if (fDebug10)
+                LogPrintf("ContractAgeWithinBounds(): GlobalCom is not Initialized");
+
+        else if (nNNContractAge == -1)
+            if (fDebug10)
+                LogPrintf("ContractAgeWithinBounds(): NN has no data");
+
+        else if (nNNContractAge == -2)
+            if (fDebug10)
+                LogPrintf("ContractAgeWithinBounds(): NN is currently syncing");
+
+        else if (nNNContractAge == -3)
+            if (fDebug10)
+                LogPrintf("ContractAgeWithinBounds(): NN reported an exception occured; Check debug2.log for details");
+
+        return false;
     }
 }
