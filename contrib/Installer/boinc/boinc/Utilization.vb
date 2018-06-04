@@ -327,6 +327,8 @@ Public Class Utilization
         Log("Finished syncing DPOR cpids.")
         Return 0
     End Function
+
+
     Public Function PushGridcoinDiagnosticData(sData As String) As Double
         Try
             msSyncData = sData
@@ -342,6 +344,28 @@ Public Class Utilization
         ResetCPIDsForManualSync()
         Call UpdateMagnitudes()
     End Sub
+
+    Public Function ContractAge() As Double
+        ' Lets update the CPP side of the wallet with the age of our contract
+        Try
+            If bMagsDoneLoading = False Then Return -2
+            Dim r As Row = GetDataValue("Historical", "Magnitude", "LastTimeSynced")
+            Dim sLTS As String = r.Synced.ToString
+
+            If sLTS = "" Then Return -1
+
+            Dim format() = {"dd/MM/yyyy h:mm:ss tt"}
+            Dim dateLTS As Date = Date.ParseExact(sLTS, format, System.Globalization.DateTimeFormatInfo.InvariantInfo, System.Globalization.DateTimeStyles.AdjustToUniversal).ToUniversalTime
+            Dim dLTS As Double = (dateLTS - New Date(1970, 1, 1, 0, 0, 0)).TotalSeconds
+
+            Return dLTS
+
+        Catch ex As Exception
+            Log("ContractAge(): exception occured -> " + ex.Message)
+
+            Return -3
+        End Try
+    End Function
     Public Sub SetSqlBlock(ByVal data As String)
         Exit Sub
     End Sub
