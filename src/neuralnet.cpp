@@ -43,6 +43,8 @@ namespace NN
 
     std::string GetNeuralHash(bool bOverride)
     {
+        SetTestnetFlag(fTestNet);
+
         if (bOverride)
             return qtGetNeuralHash("");
 
@@ -52,6 +54,8 @@ namespace NN
 
     std::string GetNeuralContract(bool bOverride)
     {
+        SetTestnetFlag(fTestNet);
+
         if (bOverride)
             return qtGetNeuralContract("");
 
@@ -88,7 +92,7 @@ namespace NN
         int64_t nSBTime = ReadCache("superblock", "magnitudes").timestamp;
         int64_t nSBAge = GetAdjustedTime() - nSBTime;
         int64_t nNNContractAge = qtGetContractAge();
-        int64_t nNNAge  = nNNContractAge + GetTimeOffset();
+        int64_t nNNAge  = GetAdjustedTime() - (nNNContractAge + GetTimeOffset());
         int64_t nSBAgeDiff = nSBAge - 86400;
 
         if (fDebug10)

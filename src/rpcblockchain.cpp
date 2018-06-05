@@ -2696,11 +2696,11 @@ UniValue testnewcontract(const UniValue& params, bool fHelp)
     UniValue res(UniValue::VOBJ);
 
     std::string contract = NN::GetNeuralContract(true);
-    std::string myNeuralHash = NN::GetNeuralHash();
+    std::string myNeuralHash = NN::GetNeuralHash(true);
     int64_t nContractAge = 0;
 
     if (!contract.empty())
-        nContractAge = qtGetContractAge() + GetTimeOffset();
+        nContractAge = GetAdjustedTime() - (qtGetContractAge() + GetTimeOffset());
 
             // Convert to Binary
     std::string sBin = PackBinarySuperblock(contract);

@@ -41,7 +41,7 @@ namespace NN
     //! \return Current neural hash. This might be empty if no has has
     //! been calculated yet.
     //!
-    #ifdef WIN32 && QT_GUI
+    #if defined(WIN32) && defined(QT_GUI)
         std::string GetNeuralHash(bool bOverride = false);
     #else
         std::string GetNeuralHash();
@@ -55,7 +55,7 @@ namespace NN
     //!
     //! \return Most recent neural contract if available.
     //!
-    #ifdef WIN32 && QT_GUI
+    #if defined(WIN32) && defined(QT_GUI)
         std::string GetNeuralContract(bool bOverride = false);
     #else
         std::string GetNeuralContract();
@@ -82,7 +82,7 @@ namespace NN
 
     int64_t IsNeuralNet();
 
-    #ifdef WIN32 && QT_GUI
+    #if defined(WIN32) && defined(QT_GUI)
         bool ContractAgeWithinBounds();
     #endif
 }
