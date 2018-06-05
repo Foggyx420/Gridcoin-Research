@@ -328,7 +328,6 @@ Public Class Utilization
         Return 0
     End Function
 
-
     Public Function PushGridcoinDiagnosticData(sData As String) As Double
         Try
             msSyncData = sData
