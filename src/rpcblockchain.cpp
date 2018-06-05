@@ -2035,14 +2035,14 @@ UniValue currentcontractaverage(const UniValue& params, bool fHelp)
 
     UniValue res(UniValue::VOBJ);
 
-    std::string contract = NN::GetNeuralContract();
+    std::string contract = NN::GetNeuralContract(true);
     double out_beacon_count = 0;
     double out_participant_count = 0;
     double out_avg = 0;
     double avg = GetSuperblockAvgMag(contract, out_beacon_count, out_participant_count, out_avg, false, nBestHeight);
     bool bValid = VerifySuperblock(contract, pindexBest);
     //Show current contract neural hash
-    std::string sNeuralHash = NN::GetNeuralHash();
+    std::string sNeuralHash = NN::GetNeuralHash(true);
     std::string neural_hash = GetQuorumHash(contract);
 
     res.pushKV("Contract", contract);
@@ -2695,8 +2695,8 @@ UniValue testnewcontract(const UniValue& params, bool fHelp)
 
     UniValue res(UniValue::VOBJ);
 
-    std::string contract = NN::GetNeuralContract();
-    std::string myNeuralHash = NN::GetNeuralHash();
+    std::string contract = NN::GetNeuralContract(true);
+    std::string myNeuralHash = NN::GetNeuralHash(true);
     // Convert to Binary
     std::string sBin = PackBinarySuperblock(contract);
     // Hash of current superblock
