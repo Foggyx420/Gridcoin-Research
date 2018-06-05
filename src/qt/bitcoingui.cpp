@@ -448,7 +448,6 @@ std::string qtGetNeuralHash(std::string data)
 
 int64_t qtGetContractAge()
 {
-
     #if defined(WIN32) && defined(QT_GUI)
     try
     {
