@@ -2860,7 +2860,6 @@ bool LoadSuperblock(std::string data, int64_t nTime, int height)
 {
         WriteCache("superblock","magnitudes",ExtractXML(data,"<MAGNITUDES>","</MAGNITUDES>"),nTime);
         WriteCache("superblock","averages",ExtractXML(data,"<AVERAGES>","</AVERAGES>"),nTime);
-        WriteCache("superblock","quotes",ExtractXML(data,"<QUOTES>","</QUOTES>"),nTime);
         WriteCache("superblock","all",data,nTime);
         WriteCache("superblock","block_number",ToString(height),nTime);
         return true;
@@ -2975,8 +2974,7 @@ std::string UnpackBinarySuperblock(std::string sBlock)
             sReconstructedMagnitudes += sRow1;
     }
     std::string sAverages   = ExtractXML(sBlock,"<AVERAGES>","</AVERAGES>");
-    std::string sQuotes     = ExtractXML(sBlock,"<QUOTES>","</QUOTES>");
-    std::string sReconstructedBlock = "<AVERAGES>" + sAverages + "</AVERAGES><QUOTES>" + sQuotes + "</QUOTES><MAGNITUDES>" + sReconstructedMagnitudes + "</MAGNITUDES>";
+    std::string sReconstructedBlock = "<AVERAGES>" + sAverages + "</AVERAGES><MAGNITUDES>" + sReconstructedMagnitudes + "</MAGNITUDES>";
     return sReconstructedBlock;
 }
 
@@ -2984,7 +2982,6 @@ std::string PackBinarySuperblock(std::string sBlock)
 {
     std::string sMagnitudes = ExtractXML(sBlock,"<MAGNITUDES>","</MAGNITUDES>");
     std::string sAverages   = ExtractXML(sBlock,"<AVERAGES>","</AVERAGES>");
-    std::string sQuotes     = ExtractXML(sBlock,"<QUOTES>","</QUOTES>");
     // For each CPID in the superblock, convert data to binary
     std::vector<std::string> vSuperblock = split(sMagnitudes.c_str(),";");
     std::string sBinary = "";
@@ -3014,7 +3011,7 @@ std::string PackBinarySuperblock(std::string sBlock)
 
             }
     }
-    std::string sReconstructedBinarySuperblock = "<ZERO>" + RoundToString(dZeroMagCPIDCount,0) + "</ZERO><BINARY>" + sBinary + "</BINARY><AVERAGES>" + sAverages + "</AVERAGES><QUOTES>" + sQuotes + "</QUOTES>";
+    std::string sReconstructedBinarySuperblock = "<ZERO>" + RoundToString(dZeroMagCPIDCount,0) + "</ZERO><BINARY>" + sBinary + "</BINARY><AVERAGES>" + sAverages + "</AVERAGES>";
     return sReconstructedBinarySuperblock;
 }
 
