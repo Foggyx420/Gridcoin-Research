@@ -384,10 +384,8 @@ void qtSyncWithDPORNodes(std::string data)
         int result = 0;
         QString qsData = ToQstring(data);
         if (fDebug3) LogPrintf("FullSyncWDporNodes");
-        std::string testnet_flag = fTestNet ? "TESTNET" : "MAINNET";
-        double function_call = qtExecuteGenericFunction("SetTestNetFlag",testnet_flag);
         result = globalcom->dynamicCall("SyncCPIDsWithDPORNodes(Qstring)",qsData).toInt();
-        LogPrintf("Done syncing. %f %f\n",function_call,(double)result);
+        LogPrintf("Done syncing. %d\n", result);
     #endif
 }
 
@@ -1418,8 +1416,6 @@ void BitcoinGUI::miningClicked()
 
 #ifdef WIN32
     if (!bGlobalcomInitialized) return;
-    std::string testnet_flag = fTestNet ? "TESTNET" : "MAINNET";
-    double function_call = qtExecuteGenericFunction("SetTestNetFlag",testnet_flag);
     globalcom->dynamicCall("ShowMiningConsole()");
 #endif
 }
@@ -1753,19 +1749,40 @@ void ReinstantiateGlobalcom()
     // Note, on Windows, if the performance counters are corrupted, rebuild them
     // by going to an elevated command prompt and issue the command: lodctr /r
     // (to rebuild the performance counters in the registry)
-    LogPrintf("Instantiating globalcom for Windows %f",(double)0);
+    LogPrintf("Instantiating globalcom for Windows.");
+
     try
     {
         globalcom = new QAxObject("BoincStake.Utilization");
-        LogPrintf("Instantiated globalcom for Windows");
+
+        LogPrintf("Instantiated globalcom for Windows.");
     }
     catch(...)
     {
         LogPrintf("Failed to instantiate globalcom.");
+
+        return;
     }
 
-    bGlobalcomInitialized = true;
+    // Set Testnet Flag here so its set on successful load
+    std::string sNetwork_Flag = fTestNet ? "TESTNET" : "MAINNET";
+    int result = globalcom->dynamicCall("SetTestNetFlag(QString)", ToQstring(sNetwork_Flag)).toInt();
+
+    if (result == 1)
+    {
+        LogPrintf("Successfully set network type to %s in neural network.", sNetwork_Flag);
+
+        bGlobalcomInitialized = true;
+    }
+    else
+    {
+        LogPrintf("WARNING: Failed to set network type to %s in neural network.", sNetwork_Flag);
+
+        bGlobalcomInitialized = false;
+    }
 #endif
+
+    return;
 }
 
 void BitcoinGUI::timerfire()

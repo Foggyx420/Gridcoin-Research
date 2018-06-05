@@ -43,8 +43,6 @@ namespace NN
 
     std::string GetNeuralHash(bool bOverride)
     {
-        SetTestnetFlag(fTestNet);
-
         if (bOverride)
             return qtGetNeuralHash("");
 
@@ -54,18 +52,11 @@ namespace NN
 
     std::string GetNeuralContract(bool bOverride)
     {
-        SetTestnetFlag(fTestNet);
-
         if (bOverride)
             return qtGetNeuralContract("");
 
         else
             return ContractAgeWithinBounds() ? qtGetNeuralContract("") : "";
-    }
-
-    bool SetTestnetFlag(bool onTestnet)
-    {
-        return qtExecuteGenericFunction("SetTestNetFlag", onTestnet ? "TESTNET" : "MAINNET") != 0;
     }
 
     bool SynchronizeDPOR(const std::string& data)
