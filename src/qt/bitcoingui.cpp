@@ -46,7 +46,7 @@
 #include "rpcconsole.h"
 #include "wallet.h"
 #include "init.h"
-#include "block.h"
+#include "gridcoin/block.h"
 #include "miner.h"
 #include "main.h"
 #include "gridcoin/backup.h"

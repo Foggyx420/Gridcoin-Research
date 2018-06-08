@@ -9,7 +9,7 @@
 #include "cpid.h"
 #include "kernel.h"
 #include "init.h" // for pwalletMain
-#include "block.h"
+#include "gridcoin/block.h"
 #include "txdb.h"
 #include "gridcoin/beacon.h"
 #include "util.h"

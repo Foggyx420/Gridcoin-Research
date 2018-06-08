@@ -11,7 +11,7 @@
 #include "init.h"
 #include "ui_interface.h"
 #include "kernel.h"
-#include "block.h"
+#include "gridcoin/block.h"
 #include "scrypt.h"
 #include "global_objects_noui.hpp"
 #include "util.h"

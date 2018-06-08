@@ -9,7 +9,7 @@
 #include "gridcoin/appcache.h"
 #include "cpid.h"
 #include "init.h" // for pwalletMain
-#include "block.h"
+#include "gridcoin/block.h"
 
 double GetTotalBalance();
 std::string TimestampToHRDate(double dtm);

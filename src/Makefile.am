@@ -48,7 +48,7 @@ GRIDCOIN_CORE_H = \
 	base58.h \
         gridcoin/beacon.h \
 	bignum.h \
-	block.h \
+        gridcoin/block.h \
         gridcoin/boinc.h \
 	checkpoints.h \
 	coincontrol.h \
@@ -101,7 +101,7 @@ GRIDCOIN_CORE_CPP = addrman.cpp \
 	gridcoin/appcache.cpp \
         gridcoin/backup.cpp \
         gridcoin/beacon.cpp \
-	block.cpp \
+        gridcoin/block.cpp \
         gridcoin/boinc.cpp \
 	checkpoints.cpp \
 	contract/polls.cpp \

@@ -8,7 +8,7 @@
 #include "rpcserver.h"
 #include "cpid.h"
 #include "kernel.h"
-#include "block.h"
+#include "gridcoin/block.h"
 #include "txdb.h"
 #include "gridcoin/beacon.h"
 #include "util.h"
