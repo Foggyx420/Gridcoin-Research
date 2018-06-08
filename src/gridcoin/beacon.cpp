@@ -1,10 +1,10 @@
 #include "beacon.h"
-#include "util.h"
-#include "uint256.h"
-#include "key.h"
-#include "main.h"
-#include "gridcoin/appcache.h"
-#include "contract/contract.h"
+#include "../util.h"
+#include "../uint256.h"
+#include "../key.h"
+#include "../main.h"
+#include "appcache.h"
+#include "../contract/contract.h"
 
 std::string RetrieveBeaconValueWithMaxAge(const std::string& cpid, int64_t iMaxSeconds);
 int64_t GetRSAWeightByCPIDWithRA(std::string cpid);

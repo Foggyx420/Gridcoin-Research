@@ -1,5 +1,5 @@
 #include "block.h"
-#include "main.h"
+#include "../main.h"
 
 #include <cstdlib>
 

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "fwd.h"
+#include "../fwd.h"
 #include <string>
 
 //!

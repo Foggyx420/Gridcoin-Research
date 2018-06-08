@@ -1,5 +1,5 @@
 #include "boinc.h"
-#include "util.h"
+#include "../util.h"
 
 #include <boost/filesystem.hpp>
 #ifdef WIN32
