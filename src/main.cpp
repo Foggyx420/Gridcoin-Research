@@ -24,7 +24,7 @@
 #include "neuralnet.h"
 #include "grcrestarter.h"
 #include "backup.h"
-#include "appcache.h"
+#include "gridcoin/appcache.h"
 #include "tally.h"
 #include "contract/contract.h"
 

@@ -1,4 +1,4 @@
-#include "appcache.h"
+#include "gridcoin/appcache.h"
 #include "main.h"
 #include "rpcserver.h"
 #include "rpcclient.h"

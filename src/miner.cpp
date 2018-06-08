@@ -10,7 +10,7 @@
 #include "cpid.h"
 #include "util.h"
 #include "main.h"
-#include "appcache.h"
+#include "gridcoin/appcache.h"
 #include "neuralnet.h"
 #include "contract/contract.h"
 

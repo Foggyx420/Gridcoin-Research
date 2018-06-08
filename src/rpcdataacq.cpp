@@ -12,7 +12,7 @@
 #include "txdb.h"
 #include "beacon.h"
 #include "util.h"
-#include "appcache.h"
+#include "gridcoin/appcache.h"
 
 #include <boost/filesystem.hpp>
 #include <iostream>

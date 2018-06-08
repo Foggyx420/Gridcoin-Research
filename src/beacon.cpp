@@ -3,7 +3,7 @@
 #include "uint256.h"
 #include "key.h"
 #include "main.h"
-#include "appcache.h"
+#include "gridcoin/appcache.h"
 #include "contract/contract.h"
 
 std::string RetrieveBeaconValueWithMaxAge(const std::string& cpid, int64_t iMaxSeconds);
