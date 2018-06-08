@@ -19,7 +19,7 @@
 #include "rpcserver.h"
 #include "rpcclient.h"
 #include "gridcoin/boinc.h"
-#include "beacon.h"
+#include "gridcoin/beacon.h"
 #include "miner.h"
 #include "neuralnet.h"
 #include "grcrestarter.h"

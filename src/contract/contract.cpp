@@ -4,7 +4,7 @@
 #include "rpcserver.h"
 #include "rpcprotocol.h"
 #include "keystore.h"
-#include "beacon.h"
+#include "gridcoin/beacon.h"
 
 std::string GetBurnAddress() { return fTestNet ? "mk1e432zWKH1MW57ragKywuXaWAtHy1AHZ" : "S67nL4vELWwdDVzjgtEP4MxryarTZ9a8GB";
                              }

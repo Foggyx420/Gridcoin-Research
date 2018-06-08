@@ -11,7 +11,7 @@
 #include "init.h" // for pwalletMain
 #include "block.h"
 #include "txdb.h"
-#include "beacon.h"
+#include "gridcoin/beacon.h"
 #include "util.h"
 #include "neuralnet.h"
 #include "grcrestarter.h"

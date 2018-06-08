@@ -10,7 +10,7 @@
 #include "kernel.h"
 #include "block.h"
 #include "txdb.h"
-#include "beacon.h"
+#include "gridcoin/beacon.h"
 #include "util.h"
 #include "gridcoin/appcache.h"
 
