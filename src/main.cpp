@@ -26,7 +26,7 @@
 #include "gridcoin/backup.h"
 #include "gridcoin/appcache.h"
 #include "tally.h"
-#include "contract/contract.h"
+#include "gridcoin/contract/contract.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>

@@ -86,14 +86,14 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include "rpcserver.h"
-#include "rpcclient.h"
-#include "rpcprotocol.h"
-#include "contract/polls.h"
+#include "../rpcserver.h"
+#include "../rpcclient.h"
+#include "../rpcprotocol.h"
+#include "../gridcoin/contract/polls.h"
 
 #include <iostream>
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
-#include "gridcoin/boinc.h"
+#include "../gridcoin/boinc.h"
 
 extern CWallet* pwalletMain;
 int ReindexWallet();

@@ -53,8 +53,8 @@ GRIDCOIN_CORE_H = \
 	checkpoints.h \
 	coincontrol.h \
 	compat.h \
-	contract/polls.h \
-	contract/contract.h \
+        gridcoin/contract/polls.h \
+        gridcoin/contract/contract.h \
         gridcoin/cpid.h \
 	crypter.h \
 	db.h \
@@ -104,8 +104,8 @@ GRIDCOIN_CORE_CPP = addrman.cpp \
         gridcoin/block.cpp \
         gridcoin/boinc.cpp \
 	checkpoints.cpp \
-	contract/polls.cpp \
-	contract/contract.cpp \
+        gridcoin/contract/polls.cpp \
+        gridcoin/contract/contract.cpp \
         gridcoin/cpid.cpp \
 	crypter.cpp \
 	db.cpp \
@@ -120,7 +120,7 @@ GRIDCOIN_CORE_CPP = addrman.cpp \
 	noui.cpp \
 	pbkdf2.cpp \
 	protocol.cpp \
-	contract/rpccontract.cpp \
+        gridcoin/contract/rpccontract.cpp \
 	rpcblockchain.cpp \
 	rpcclient.cpp \
 	rpcdump.cpp \

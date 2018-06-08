@@ -18,8 +18,8 @@
 #include "gridcoin/backup.h"
 #include "gridcoin/appcache.h"
 #include "tally.h"
-#include "contract/polls.h"
-#include "contract/contract.h"
+#include "gridcoin/contract/polls.h"
+#include "gridcoin/contract/contract.h"
 
 #include <boost/filesystem.hpp>
 #include <iostream>
@@ -27,7 +27,6 @@
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 #include <algorithm>
-
 #include <univalue.h>
 
 

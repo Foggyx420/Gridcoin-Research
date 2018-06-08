@@ -1,15 +1,15 @@
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 #include <boost/algorithm/string.hpp>
 
-#include "main.h"
+#include "../../main.h"
 #include "polls.h"
 #include "contract.h"
-#include "rpcclient.h"
-#include "rpcserver.h"
-#include "../gridcoin/appcache.h"
-#include "../gridcoin/cpid.h"
-#include "init.h" // for pwalletMain
-#include "gridcoin/block.h"
+#include "../../rpcclient.h"
+#include "../../rpcserver.h"
+#include "../appcache.h"
+#include "../cpid.h"
+#include "../../init.h" // for pwalletMain
+#include "../block.h"
 
 double GetTotalBalance();
 std::string TimestampToHRDate(double dtm);
