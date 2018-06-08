@@ -1,6 +1,6 @@
 #include "main.h"
 #include "util.h"
-#include "boinc.h"
+#include "gridcoin/boinc.h"
 #include "gridcoin/appcache.h"
 
 #include <boost/algorithm/string.hpp>

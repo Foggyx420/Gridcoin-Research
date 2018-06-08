@@ -93,7 +93,7 @@
 
 #include <iostream>
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
-#include "boinc.h"
+#include "gridcoin/boinc.h"
 
 extern CWallet* pwalletMain;
 int ReindexWallet();

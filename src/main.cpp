@@ -18,7 +18,7 @@
 #include "cpid.h"
 #include "rpcserver.h"
 #include "rpcclient.h"
-#include "boinc.h"
+#include "gridcoin/boinc.h"
 #include "beacon.h"
 #include "miner.h"
 #include "neuralnet.h"
