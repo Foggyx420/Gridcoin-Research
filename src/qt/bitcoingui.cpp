@@ -49,7 +49,7 @@
 #include "block.h"
 #include "miner.h"
 #include "main.h"
-#include "backup.h"
+#include "gridcoin/backup.h"
 #include "clicklabel.h"
 
 #ifdef Q_OS_MAC
