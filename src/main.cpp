@@ -15,7 +15,7 @@
 #include "scrypt.h"
 #include "global_objects_noui.hpp"
 #include "util.h"
-#include "cpid.h"
+#include "gridcoin/cpid.h"
 #include "rpcserver.h"
 #include "rpcclient.h"
 #include "gridcoin/boinc.h"

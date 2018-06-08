@@ -6,8 +6,8 @@
 #include "contract.h"
 #include "rpcclient.h"
 #include "rpcserver.h"
-#include "gridcoin/appcache.h"
-#include "cpid.h"
+#include "../gridcoin/appcache.h"
+#include "../gridcoin/cpid.h"
 #include "init.h" // for pwalletMain
 #include "gridcoin/block.h"
 

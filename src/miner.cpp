@@ -7,7 +7,7 @@
 #include "txdb.h"
 #include "miner.h"
 #include "kernel.h"
-#include "cpid.h"
+#include "gridcoin/cpid.h"
 #include "util.h"
 #include "main.h"
 #include "gridcoin/appcache.h"

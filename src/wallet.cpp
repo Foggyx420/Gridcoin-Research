@@ -13,7 +13,7 @@
 #include "coincontrol.h"
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/thread.hpp>
-#include "cpid.h"
+#include "gridcoin/cpid.h"
 #include "gridcoin/block.h"
 #include "rpcserver.h"
 #include "rpcclient.h"

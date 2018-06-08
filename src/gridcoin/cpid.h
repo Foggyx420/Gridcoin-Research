@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstring>
-#include "util.h"
+#include "../util.h"
 
 class CPID{public:typedef unsigned int size_type;
 CPID();CPID(std::string text);CPID(std::string text,int entropybit,uint256 

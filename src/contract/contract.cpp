@@ -1,10 +1,10 @@
-#include "cpid.h"
+#include "../gridcoin/cpid.h"
 #include "init.h"
 #include "rpcclient.h"
 #include "rpcserver.h"
 #include "rpcprotocol.h"
 #include "keystore.h"
-#include "gridcoin/beacon.h"
+#include "../gridcoin/beacon.h"
 
 std::string GetBurnAddress() { return fTestNet ? "mk1e432zWKH1MW57ragKywuXaWAtHy1AHZ" : "S67nL4vELWwdDVzjgtEP4MxryarTZ9a8GB";
                              }

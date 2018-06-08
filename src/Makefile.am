@@ -55,7 +55,7 @@ GRIDCOIN_CORE_H = \
 	compat.h \
 	contract/polls.h \
 	contract/contract.h \
-	cpid.h \
+        gridcoin/cpid.h \
 	crypter.h \
 	db.h \
 	fwd.h \
@@ -106,7 +106,7 @@ GRIDCOIN_CORE_CPP = addrman.cpp \
 	checkpoints.cpp \
 	contract/polls.cpp \
 	contract/contract.cpp \
-	cpid.cpp \
+        gridcoin/cpid.cpp \
 	crypter.cpp \
 	db.cpp \
 	init.cpp \
