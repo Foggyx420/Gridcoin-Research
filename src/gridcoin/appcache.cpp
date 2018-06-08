@@ -1,6 +1,6 @@
 #include "appcache.h"
-#include "../util.h"
-#include "../main.h"
+#include "util.h"
+#include "main.h"
 
 #include <boost/algorithm/string.hpp>
 
