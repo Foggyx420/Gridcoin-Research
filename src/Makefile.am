@@ -57,6 +57,7 @@ GRIDCOIN_CORE_H = \
 	alert.h \
 	allocators.h \
 	appcache.h \
+    args.h \
 	backup.h \
 	base58.h \
 	beacon.h \
@@ -115,6 +116,7 @@ GRIDCOIN_CORE_CPP = addrman.cpp \
 	alert.cpp \
 	allocators.cpp \
 	appcache.cpp \
+    args.cpp \
 	backup.cpp \
 	beacon.cpp \
 	block.cpp \
