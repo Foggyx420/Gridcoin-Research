@@ -1,6 +1,7 @@
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 #include <boost/algorithm/string.hpp>
 
+#include "args.h"
 #include "main.h"
 #include "polls.h"
 #include "contract.h"

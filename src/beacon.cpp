@@ -1,3 +1,4 @@
+#include "args.h"
 #include "beacon.h"
 #include "util.h"
 #include "uint256.h"

@@ -1,6 +1,12 @@
 #pragma once
 
 #include <string>
+#include <map>
+#include <vector>
+
+void ParseParameters(int argc, const char*const argv[]);
+void InterpretNegativeSetting(std::string name, std::map<std::string, std::string>& mapSettingsRet);
+void ReadConfigFile(std::map<std::string, std::string>& mapSettingsRet, std::map<std::string, std::vector<std::string> >& mapMultiSettingsRet);
 
 extern std::map<std::string, std::string> mapArgs;
 extern std::map<std::string, std::vector<std::string> > mapMultiArgs;

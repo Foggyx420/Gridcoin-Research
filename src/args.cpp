@@ -1,13 +1,20 @@
 #include "args.h"
-#include <map>
+#include "util.h"
+
+#include <cstdlib>
+#include <inttypes.h>
+#include <strlcpy.h>
+#include <boost/filesystem.hpp>
+#include <boost/program_options/detail/config_file.hpp>
+
 #ifdef WIN32
 #include <string.h>
 #endif
 
-std::map<string, string> mapArgs;
-std::map<string, vector<string> > mapMultiArgs;
+std::map<std::string, std::string> mapArgs;
+std::map<std::string, std::vector<std::string> > mapMultiArgs;
 
-static void InterpretNegativeSetting(std::string name, std::map<std::string, std::string>& mapSettingsRet)
+void InterpretNegativeSetting(std::string name, std::map<std::string, std::string>& mapSettingsRet)
 {
     // interpret -nofoo as -foo=0 (and -nofoo=0 as -foo=1) as long as -foo not set
     if (name.find("-no") == 0)
@@ -51,7 +58,7 @@ void ParseParameters(int argc, const char* const argv[])
     // New 0.6 features:
     for (auto const& entry : mapArgs)
     {
-        string name = entry.first;
+        std::string name = entry.first;
 
         //  interpret --foo as -foo (as long as both are not set)
         if (name.find("--") == 0)
@@ -77,8 +84,8 @@ std::string GetArgument(const std::string& arg, const std::string& defaultvalue)
 
 // SetArgument - Set or alter arguments stored in memory
 void SetArgument(
-            const string &argKey,
-            const string &argValue)
+            const std::string &argKey,
+            const std::string &argValue)
 {
     mapArgs["-" + argKey] = argValue;
 }
@@ -129,4 +136,28 @@ void ForceSetArg(const std::string& strArg, const std::string& strValue)
     mapArgs[strArg] = strValue;
     mapMultiArgs[strArg].clear();
     mapMultiArgs[strArg].push_back(strValue);
+}
+
+void ReadConfigFile(std::map<std::string, std::string>& mapSettingsRet,
+                    std::map<std::string, std::vector<std::string> >& mapMultiSettingsRet)
+{
+    boost::filesystem::ifstream streamConfig(GetConfigFile());
+    if (!streamConfig.good())
+        return; // No bitcoin.conf file is OK
+
+    std::set<std::string> setOptions;
+    setOptions.insert("*");
+
+    for (boost::program_options::detail::config_file_iterator it(streamConfig, setOptions), end; it != end; ++it)
+    {
+        // Don't overwrite existing settings so command line settings override bitcoin.conf
+        std::string strKey = std::string("-") + it->string_key;
+        if (mapSettingsRet.count(strKey) == 0)
+        {
+            mapSettingsRet[strKey] = it->value[0];
+            // interpret nofoo=1 as foo=0 (and nofoo=0 as foo=1) as long as foo not set)
+            InterpretNegativeSetting(strKey, mapSettingsRet);
+        }
+        mapMultiSettingsRet[strKey].push_back(it->value[0]);
+    }
 }

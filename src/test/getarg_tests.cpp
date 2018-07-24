@@ -2,6 +2,7 @@
 #include <boost/foreach.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include "args.h"
 #include "util.h"
 
 BOOST_AUTO_TEST_SUITE(getarg_tests)

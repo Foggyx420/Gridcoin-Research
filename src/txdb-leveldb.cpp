@@ -13,6 +13,7 @@
 #include <leveldb/filter_policy.h>
 #include <leveldb/helpers/memenv/memenv.h>
 
+#include "args.h"
 #include "kernel.h"
 #include "txdb.h"
 #include "main.h"

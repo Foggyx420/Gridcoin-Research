@@ -3,6 +3,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "args.h"
 #include "version.h"
 #include "txdb.h"
 #include "wallet.h"

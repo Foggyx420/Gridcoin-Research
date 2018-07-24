@@ -9,6 +9,7 @@
 using namespace std;
 using namespace boost;
 
+#include "args.h"
 #include "script.h"
 #include "keystore.h"
 #include "bignum.h"

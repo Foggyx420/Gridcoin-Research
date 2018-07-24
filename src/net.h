@@ -11,6 +11,7 @@
 #include <atomic>
 #include <openssl/rand.h>
 
+#include "args.h"
 #include "netbase.h"
 #include "mruset.h"
 #include "protocol.h"

@@ -1,3 +1,4 @@
+#include "args.h"
 #include "neuralnet.h"
 #include "version.h"
 #include "sync.h"

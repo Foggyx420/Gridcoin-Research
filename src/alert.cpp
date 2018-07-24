@@ -8,6 +8,7 @@
 #include <boost/thread.hpp>
 #include <map>
 
+#include "args.h"
 #include "alert.h"
 #include "key.h"
 #include "net.h"

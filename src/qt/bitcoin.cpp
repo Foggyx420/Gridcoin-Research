@@ -16,6 +16,7 @@
 #include "ui_interface.h"
 #include "qtipcserver.h"
 #include "util.h"
+#include "args.h"
 
 #include <QMessageBox>
 #include <QTextCodec>

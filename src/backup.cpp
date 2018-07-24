@@ -2,6 +2,7 @@
 // Backup related functions are placed here to keep vital sections of
 // code contained while maintaining clean code.
 
+#include "args.h"
 #include "walletdb.h"
 #include "wallet.h"
 #include "util.h"

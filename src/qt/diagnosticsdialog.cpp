@@ -1,3 +1,4 @@
+#include "args.h"
 #include "main.h"
 #include "boinc.h"
 #include "appcache.h"

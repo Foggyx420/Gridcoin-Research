@@ -1,3 +1,4 @@
+#include "args.h"
 #include "transactionrecord.h"
 #include "wallet.h"
 #include "base58.h"

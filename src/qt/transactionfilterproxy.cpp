@@ -1,5 +1,5 @@
+#include "args.h"
 #include "transactionfilterproxy.h"
-
 #include "transactiontablemodel.h"
 #include "transactionrecord.h"
 #include "util.h"
