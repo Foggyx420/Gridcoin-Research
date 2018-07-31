@@ -162,10 +162,10 @@ std::string executeRain(std::string sRecipients)
                 {
                     CBitcoinAddress address(sAddress);
                     if (!address.IsValid())
-                        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid Gridcoin address: ")+sAddress);
+                        return "Invalid Gridcoin address: " + sAddress;
 
                     if (setAddress.count(address))
-                        throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ")+sAddress);
+                        return "Invalid parameter, duplicated address: " + sAddress;
 
                     setAddress.insert(address);
                     dTotalToSend += dAmount;
@@ -179,12 +179,14 @@ std::string executeRain(std::string sRecipients)
         }
     }
 
-    EnsureWalletIsUnlocked();
+    if (pwalletMain->IsLocked() || fWalletUnlockStakingOnly)
+        return "Wallet needs to be fully unlocked";
+
     // Check funds
     double dBalance = GetTotalBalance();
 
     if (dTotalToSend > dBalance)
-        throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Account has insufficient funds");
+        return "Insufficient funds";
     // Send
     CReserveKey keyChange(pwalletMain);
     int64_t nFeeRequired = 0;
@@ -194,8 +196,8 @@ std::string executeRain(std::string sRecipients)
     if (!fCreated)
     {
         if (totalAmount + nFeeRequired > pwalletMain->GetBalance())
-            throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Insufficient funds");
-        throw JSONRPCError(RPC_WALLET_ERROR, "Transaction creation failed");
+            return "Insufficient funds";
+        return "Transaction creation failed";
     }
 
     LogPrintf("Committing.");
@@ -204,7 +206,7 @@ std::string executeRain(std::string sRecipients)
     {
         LogPrintf("Commit failed.");
 
-        throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
+        return "Transaction commit failed";
     }
     std::string sNarr = "Rain successful:  Sent " + wtx.GetHash().GetHex() + ".";
     LogPrintf("Success %s",sNarr.c_str());
