@@ -2352,3 +2352,140 @@ UniValue burn(const UniValue& params, bool fHelp)
 
     return wtx.GetHash().GetHex();
 }
+
+UniValue burnalldust(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() > 1)
+        throw runtime_error(
+                "burnalldust [bool:commit]\n"
+                "\n"
+                "[bool:commit] -> Default false; when false performs a dry run to supply client with data\n"
+                "\n"
+                "Burn all dust utxos to the network\n"
+                "NOTE: This makes all dust amounts as a miner fee for the next mined block.\n"
+                "NOTE: Burning as a miner fee makes this a transaction free.\n"
+                "NOTE: Wallet is required to be unlocked for both dry run and commit when wallet is encrypted\n");
+
+    RPCTypeCheck(params, { UniValue::VBOOL });
+
+    UniValue results(UniValue::VARR);
+    UniValue txdata(UniValue::VARR);
+    UniValue entry(UniValue::VOBJ);
+
+    bool bCommit = false;
+
+    if (params.size() == 1)
+        bCommit = params[0].get_bool();
+
+    LOCK2(cs_main, pwalletMain->cs_wallet);
+
+    EnsureWalletIsUnlocked();
+
+    vector<COutput> vecOutputs;
+
+    pwalletMain->AvailableCoins(vecOutputs, true, NULL, false);
+
+    CWalletTx wtx;
+    const CKeyStore& keystore = *pwalletMain;
+
+    wtx.vin.clear();
+    wtx.vout.clear();
+    wtx.fFromMe = true;
+
+    int64_t nTotalDust = 0;
+    int nCount = 0;
+
+    for (auto const& out : vecOutputs)
+    {
+        int64_t nValue = out.tx->vout[out.i].nValue;
+
+        // dust defined as <= 0.01 GRC
+        if (nValue >= 1000001)
+            continue;
+
+        nTotalDust += nValue;
+
+        // Populate Tx Data for user
+        const CScript& pk = out.tx->vout[out.i].scriptPubKey;
+
+        UniValue txentry(UniValue::VOBJ);
+
+        txentry.pushKV("txid", out.tx->GetHash().GetHex());
+        txentry.pushKV("vout", out.i);
+
+        CTxDestination address;
+
+        if (ExtractDestination(out.tx->vout[out.i].scriptPubKey, address))
+        {
+            txentry.pushKV("address", CBitcoinAddress(address).ToString());
+
+            auto item = pwalletMain->mapAddressBook.find(address);
+
+            if (item != pwalletMain->mapAddressBook.end())
+                txentry.pushKV("label", item->second);
+        }
+
+        txentry.pushKV("scriptPubKey", HexStr(pk.begin(), pk.end()));
+        txentry.pushKV("amount", ValueFromAmount(nValue));
+        txentry.pushKV("confirmations", out.nDepth);
+
+        txdata.push_back(txentry);
+
+        // Push as input
+        wtx.vin.push_back(CTxIn(out.tx->GetHash(), out.i));
+
+        // Sign input
+        if (!SignSignature(keystore, *out.tx, wtx, nCount, SIGHASH_NONE | SIGHASH_ANYONECANPAY))
+        {
+            entry.pushKV("ERROR", "Failed to sign transaction");
+
+            results.push_back(entry);
+
+            return results;
+        }
+
+        nCount++;
+    }
+
+    if (wtx.vin.empty())
+    {
+        entry.pushKV("ERROR", "No dust has been found");
+
+        results.push_back(entry);
+
+        return results;
+    }
+
+    results.push_back(txdata);
+
+    if (bCommit)
+    {
+        CScript scriptPubKey;
+
+        scriptPubKey = CScript() << OP_RETURN;
+
+        wtx.vout.push_back(CTxOut(0, scriptPubKey));
+
+        if (!AcceptToMemoryPool(mempool, wtx, NULL))
+            throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX rejected");
+
+        SyncWithWallets(wtx, NULL, true);
+
+        RelayTransaction(wtx, wtx.GetHash());
+    }
+
+    entry.pushKV("Commit", bCommit ? "Relay Transaction" : "Dry run");
+
+    if (bCommit)
+        entry.pushKV("TXID", wtx.GetHash().GetHex());
+
+    entry.pushKV("Total amount", ValueFromAmount(nTotalDust));
+    entry.pushKV("Total inputs", nCount);
+
+    if (bCommit)
+        entry.pushKV("Success", pwalletMain->GetTransaction(wtx.GetHash(), wtx));
+
+    results.push_back(entry);
+
+    return results;
+}

@@ -107,6 +107,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "addmultisigaddress"     , 1 },
     { "burn"                   , 0 },
     { "burn2"                  , 1 },
+    { "burnalldust"            , 0 },
     { "createrawtransaction"   , 0 },
     { "createrawtransaction"   , 1 },
     { "getbalance"             , 1 },
