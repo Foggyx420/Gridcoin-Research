@@ -97,6 +97,24 @@ struct mapArgscomp
 typedef std::map<std::string, std::string, mapArgscomp> ArgsMap;
 typedef std::map<std::string, std::vector<std::string>, mapArgscomp> ArgsMultiMap;
 
+/**
+ * Allow bool arguments values in config file to be set to 1, 0, true, false and be case insensitive.
+ */
+
+struct BoolArg
+{
+private:
+    std::string out = "";
+
+public:
+    BoolArg(const std::string& in) : out(in) {}
+
+    operator bool() const
+    {
+        return (out.empty() || out == "1" || strcasecmp(out.c_str(), "true") == 0) ? true : false;
+    }
+};
+
 extern ArgsMap mapArgs;
 extern ArgsMultiMap mapMultiArgs;
 
