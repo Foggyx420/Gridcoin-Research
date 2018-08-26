@@ -412,7 +412,7 @@ bool AppInit2(ThreadHandlerPtr threads)
     else
         fDebugNet = GetBoolArg("-debugnet");
 
-    if (GetArg("-debug", "false")=="true")
+    if (GetBoolArg("-debug"))
     {
             fDebug = true;
             LogPrintf("Entering debug mode.");
@@ -420,7 +420,7 @@ bool AppInit2(ThreadHandlerPtr threads)
 
     fDebug2 = false;
 
-    if (GetArg("-debug2", "false")=="true")
+    if (GetBoolArg("-debug2"))
     {
             fDebug2 = true;
             LogPrintf("Entering GRC debug mode 2.");
@@ -428,19 +428,19 @@ bool AppInit2(ThreadHandlerPtr threads)
 
     fDebug3 = false;
 
-    if (GetArg("-debug3", "false")=="true")
+    if (GetBoolArg("-debug3"))
     {
             fDebug3 = true;
             LogPrintf("Entering GRC debug mode 3.");
     }
 
-    if (GetArg("-debug4", "false")=="true")
+    if (GetBoolArg("-debug4"))
     {
         fDebug4 = true;
         LogPrintf("Entering RPC time debug mode");
     }
 
-    fDebug10= (GetArg("-debug10","false")=="true");
+    fDebug10 = GetBoolArg("-debug10");
 
 #if defined(WIN32)
     fDaemon = false;
