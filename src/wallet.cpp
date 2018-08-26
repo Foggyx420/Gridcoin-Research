@@ -1781,7 +1781,7 @@ bool CWallet::GetStakeWeight(uint64_t& nWeight)
 
 void NetworkTimer()
 {
-    if (GetArg("-fullbore", "false") != "true") MilliSleep(1);
+    if (!GetBoolArg("-fullbore")) MilliSleep(1);
     if (mdMachineTimerLast == 0) mdMachineTimerLast = GetAdjustedTime();
     double elapsed = GetAdjustedTime() - mdMachineTimerLast;
     mdPORNonce += 1;

@@ -9,7 +9,7 @@ std::string GetTxProject(uint256 hash, int& out_blocknumber, int& out_blocktype,
 bool TransactionRecord::showTransaction(const CWalletTx &wtx)
 {
 
-	std::string ShowOrphans = GetArg("-showorphans", "false");
+    std::string ShowOrphans = GetBoolArg("-showorphans");
 
 	//R Halford - POS Transactions - If Orphaned follow showorphans directive:
 	if (wtx.IsCoinStake() && !wtx.IsInMainChain())
