@@ -48,6 +48,16 @@ BOOST_AUTO_TEST_CASE(boolarg)
     BOOST_CHECK(GetBoolArg("-foo", false));
     BOOST_CHECK(GetBoolArg("-foo", true));
 
+    ResetArgs("-foo=false");
+    BOOST_CHECK(!GetBoolArg("-foo"));
+    BOOST_CHECK(!GetBoolArg("-foo", false));
+    BOOST_CHECK(!GetBoolArg("-foo", true));
+
+    ResetArgs("-foo=true");
+    BOOST_CHECK(GetBoolArg("-foo"));
+    BOOST_CHECK(GetBoolArg("-foo", false));
+    BOOST_CHECK(GetBoolArg("-foo", true));
+
     // New 0.6 feature: auto-map -nosomething to !-something:
     ResetArgs("-nofoo");
     BOOST_CHECK(!GetBoolArg("-foo"));
