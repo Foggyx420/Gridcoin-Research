@@ -91,12 +91,11 @@ void ClientModel::updateTimer()
         cachedNumBlocksOfPeers = newNumBlocksOfPeers;
 
         emit numBlocksChanged(newNumBlocks, newNumBlocksOfPeers);
-	}
+    }
     if (!GetBoolArg("-suppressnetworkgraph"))
-	{
-		emit bytesChanged(getTotalBytesRecv(), getTotalBytesSent());
-	}
-
+    {
+        emit bytesChanged(getTotalBytesRecv(), getTotalBytesSent());
+    }
 }
 
 void ClientModel::updateNumConnections(int numConnections)
