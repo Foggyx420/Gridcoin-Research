@@ -490,9 +490,7 @@ UniValue getrawtransaction(const UniValue& params, bool fHelp)
     // Accept either a bool (true) or a num (>=1) to indicate verbose output. Adapted from Bitcoin 20180820.
     bool fVerbose = false;
     if (!params[1].isNull())
-    {
-        fVerbose = params[1].isNum() ? (params[1].get_int() != 0) : params[1].get_bool();
-    }
+        fVerbose = BoolFromArg(params[1]);
     
     LOCK(cs_main);
 

@@ -117,6 +117,13 @@ UniValue ValueFromAmount(int64_t amount)
     return UniValue(UniValue::VNUM, strprintf("%s%d.%08d", sign ? "-" : "", quotient, remainder));
 }
 
+bool BoolFromArg(const UniValue& value)
+{
+    if (value.isNum())
+        return (value.get_int() == 1) ? true : false;
+
+    return value.get_bool();
+}
 
 //
 // Utilities: convert hex-encoded Values

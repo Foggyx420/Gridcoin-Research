@@ -83,6 +83,7 @@ extern int64_t nWalletUnlockTime;
 extern int64_t AmountFromValue(const UniValue& value);
 extern UniValue ValueFromAmount(int64_t amount);
 extern double GetDifficulty(const CBlockIndex* blockindex = NULL);
+extern bool BoolFromArg(const UniValue& value);
 
 extern std::string HelpRequiringPassphrase();
 extern void EnsureWalletIsUnlocked();
