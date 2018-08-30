@@ -4914,6 +4914,31 @@ bool ProcessBlock(CNode* pfrom, CBlock* pblock, bool generated_by_me)
     if (!pblock->CheckBlock("ProcessBlock", pindexBest->nHeight, 100*COIN))
         return error("ProcessBlock() : CheckBlock FAILED");
 
+    // Fix implemented on another coin for txPrev failed
+    // Symptons you client is on its best height and syncing during initial download
+    // You can get block the top height of your wallet
+    // The next block in line is the one throwing the txPrev problem yet the previous block does exist
+    // To Prevent that the other coin would do a CheckProofOfstake here anyway even on a orphan and if it failed it was due to txPrev problem
+    // Simply what they did was not orphan the said block but push for blocks and the problem would rectify itself.
+    // However here we cannot simply Check Proof Of Stake in gridcoin since prev stake modifier is taken into account so i'll simply check for the txPrev here
+    if (pblock->IsProofOfStake())
+    {
+        const CTxIn& txin = pblock->vtx[1].vin[0];
+        CTxDB txdb("r");
+        CTransaction txPrev;
+        CTxIndex txindex;
+
+        if (!txPrev.ReadFromDisk(txdb, txin.prevout, txindex))
+        {
+            LogPrintf("ProcessBlock() : INFO: read txPrev failed for block %s -- Attempting to recover", hash.ToString().c_str());  // previous transaction not in main chain, may occur during initial download
+
+            if (pfrom)
+                pfrom->PushGetBlocks(pindexBest, pblock->GetHash(), true);
+
+            return false; // Exit here as if we did not get that block and do not orphan it.
+        }
+    }
+
     // If don't already have its previous block, shunt it off to holding area until we get it
     if (!mapBlockIndex.count(pblock->hashPrevBlock))
     {
@@ -6763,7 +6788,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 LogPrintf("  got inventory: %s  %s", inv.ToString(), fAlreadyHave ? "have" : "new");
 
             if (!fAlreadyHave)
-                pfrom->AskFor(inv);
+                pfrom->AskFor(inv, IsInitialBlockDownload());
             else if (inv.type == MSG_BLOCK && mapOrphanBlocks.count(inv.hash)) {
                 pfrom->PushGetBlocks(pindexBest, GetOrphanRoot(mapOrphanBlocks[inv.hash]), true);
             } else if (nInv == nLastBlock) {
