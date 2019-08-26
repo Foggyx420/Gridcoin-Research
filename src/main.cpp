@@ -1391,8 +1391,11 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CTransaction &tx, bool* pfMissingInput
             // If this happens repeatedly, purge peers
             if (TimerMain("AcceptToMemoryPool", 20))
             {
-                LogPrint("mempool", "AcceptToMemoryPool::CleaningInboundConnections");
-                CleanInboundConnections(true);
+                // Vancouver Test
+                LogPrintf("VANCOUVER %" PRId64 " ATMP-ATMP", GetAdjustedTime());
+
+                //LogPrint("mempool", "AcceptToMemoryPool::CleaningInboundConnections");
+                //CleanInboundConnections(true);
             }
             if (fDebug || true)
             {
@@ -2330,7 +2333,9 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs, map<uint256, CTx
                     }
                     if (TimerMain("ConnectInputs", 20))
                     {
-                        CleanInboundConnections(false);
+                        //CleanInboundConnections(false);
+                        LogPrintf("VANCOUVER %" PRId64 " ATMP-CI", GetAdjustedTime());
+
                     }
 
                     if (fMiner) return false;
