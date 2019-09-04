@@ -1485,15 +1485,20 @@ bool CWallet::SelectCoins(int64_t nTargetValue, unsigned int nSpendTime, set<pai
             SelectCoinsMinConf(nTargetValue, nSpendTime, 0, 1, vCoins, setCoinsRet, nValueRet, contract));
 }
 
-// Select some coins without random shuffle or best subset approximation
+/* Select coins for staking and take reserve balance into account
+//
+// Formula Stakable = ((S - R) > utxo)
+//
+// This function always returns true. This should not be the case but now we will return false when appropiate
+*/
 bool CWallet::SelectCoinsForStaking(int64_t nTargetValueIn, unsigned int nSpendTime,
-    std::set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64_t& nValueRet) const
+    std::set<pair<const CWalletTx*,unsigned int> >& setCoinsRet) const
 {
     vector<COutput> vCoins;
     AvailableCoinsForStaking(vCoins, nSpendTime);
 
     setCoinsRet.clear();
-    nValueRet = 0;
+    int64_t nValueRet = 0;
 
     int64_t nTargetValue = nTargetValueIn;
 
@@ -1718,7 +1723,7 @@ bool CWallet::GetStakeWeight(uint64_t& nWeight)
     set<pair<const CWalletTx*,unsigned int> > setCoins;
     int64_t nValueIn = 0;
 
-    if (!SelectCoinsForStaking(nBalance - nReserveBalance,  GetAdjustedTime(), setCoins, nValueIn))
+    if (!SelectCoinsForStaking(nBalance - nReserveBalance,  GetAdjustedTime(), setCoins))
         return false;
 
     if (setCoins.empty())
