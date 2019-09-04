@@ -444,17 +444,16 @@ bool CreateCoinStake( CBlock &blocknew, CKey &key,
     int64_t nValueIn = 0;
     //Request all the coins here, check reserve later
 
-    if (BalanceToStake <= 0) {
+    if (BalanceToStake <= 0)
         return BreakForNoCoins(MinerStatus, _("No coins"));
-    } else if (!wallet.SelectCoinsForStaking(BalanceToStake*2, txnew.nTime, CoinsToStake, nValueIn)) {
-        return BreakForNoCoins(MinerStatus, _("Waiting for coins to mature"));
-    }
 
     BalanceToStake -= nReserveBalance;
 
-    if (BalanceToStake <= 0) {
+    if (BalanceToStake <= 0)
         return BreakForNoCoins(MinerStatus, _("Entire balance reserved"));
-    }
+
+    else if (!wallet.SelectCoinsForStaking(BalanceToStake, txnew.nTime, CoinsToStake, nValueIn))
+        return BreakForNoCoins(MinerStatus, _("Waiting for coins to mature"));
 
     if(fDebug2) LogPrintf("CreateCoinStake: Staking nTime/16= %d Bits= %u",
     txnew.nTime/16,blocknew.nBits);
