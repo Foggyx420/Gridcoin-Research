@@ -22,6 +22,7 @@
 #include "main.h"
 #include "util.h"
 #include "beacon.h"
+#include "miner.h"
 
 using namespace std;
 
@@ -1485,55 +1486,82 @@ bool CWallet::SelectCoins(int64_t nTargetValue, unsigned int nSpendTime, set<pai
             SelectCoinsMinConf(nTargetValue, nSpendTime, 0, 1, vCoins, setCoinsRet, nValueRet, contract));
 }
 
-/* Select coins for staking and take reserve balance into account
+/* Select coins from wallet for staking
 //
-// Formula Stakable = ((S - R) > utxo)
+// All wallet based information to be checked here and sent to miner as requested by this function
+// 1) Check if we have a balance
+// 2) Check if we have a balance after the reserve is applied to consider staking with
+// 3) Check if we coins eligable to stake
+// 4) Iterate through the wallet of stakable utxos and return them to miner if we can stake with them
 //
-// This function always returns true. This should not be the case but now we will return false when appropiate
+// Formula Stakable = ((SPENDABLE - RESERVED) > UTXO)
 */
-bool CWallet::SelectCoinsForStaking(int64_t nTargetValueIn, unsigned int nSpendTime,
+bool CWallet::SelectCoinsForStaking(unsigned int nSpendTime,
     std::set<pair<const CWalletTx*,unsigned int> >& setCoinsRet) const
 {
+    int64_t BalanceToConsider = GetBalance();
+
+    // Check if we have a spendable balance
+    if (BalanceToConsider <= 0)
+    {
+        LOCK(MinerStatus.lock);
+        MinerStatus.Clear();
+        MinerStatus.ReasonNotStaking += _("No coins");
+        return false;
+    }
+    // Check if we have a balance after the reserve is applied to consider staking with
+    BalanceToConsider -= nReserveBalance;
+
+    if (BalanceToConsider <= 0)
+    {
+        LOCK(MinerStatus.lock);
+        MinerStatus.Clear();
+        MinerStatus.ReasonNotStaking += _("Entire balance reserved");
+        return false;
+    }
+
+    if (fDebug2)
+        LogPrintf("SelectCoinsForStaking: Balance considered for staking %" PRId64, BalanceToConsider);
+
     vector<COutput> vCoins;
     AvailableCoinsForStaking(vCoins, nSpendTime);
 
+    // Check to see if any coins are available for staking
+    if (vCoins.empty())
+    {
+        LOCK(MinerStatus.lock);
+        MinerStatus.Clear();
+        MinerStatus.ReasonNotStaking +=  _("No mature coins");
+        return false;
+    }
+
+    // Iterate through the wallet of stakable utxos and return them to miner if we can stake with them
     setCoinsRet.clear();
-    int64_t nValueRet = 0;
-
-    int64_t nTargetValue = nTargetValueIn;
-
-    //if (GlobalCPUMiningCPID.cpid != "INVESTOR"  && msMiningErrors7 != "Probing coin age")
-    //{
-    //      nTargetValue = nTargetValueIn/2;
-    //}
 
     for(const COutput& output : vCoins)
     {
         const CWalletTx *pcoin = output.tx;
         int i = output.i;
-
-        // Stop if we've chosen enough inputs
-        if (nValueRet >= nTargetValue)
-            break;
-
         int64_t n = pcoin->vout[i].nValue;
 
-        pair<int64_t,pair<const CWalletTx*,unsigned int> > coin = make_pair(n,make_pair(pcoin, i));
+        // If the Spendable balance is more then utxo value it is classified as able to stake
+        if (BalanceToConsider > n)
+        {
+            if (fDebug2)
+                LogPrintf("SelectCoinsForStaking: UTXO=%s (BalanceToConsider=%" PRId64 " > nValue=%" PRId64 ")", pcoin->vout[i].GetHash().ToString(), BalanceToConsider, n);
 
-        if (n >= nTargetValue)
-        {
-            // If input value is greater or equal to target then simply insert
-            //    it into the current subset and exit
-            setCoinsRet.insert(coin.second);
-            nValueRet += coin.first;
-            break;
+            setCoinsRet.insert(make_pair(pcoin, i));
         }
-        else if (n < nTargetValue + CENT)
+
+        else
         {
-            setCoinsRet.insert(coin.second);
-            nValueRet += coin.first;
+            LOCK(MinerStatus.lock);
+            MinerStatus.Clear();
+            MinerStatus.ReasonNotStaking += _("Coins locked by reserve balance");
+
+            return false;
         }
-    }
+     }
 
     return true;
 }
@@ -1723,7 +1751,7 @@ bool CWallet::GetStakeWeight(uint64_t& nWeight)
     set<pair<const CWalletTx*,unsigned int> > setCoins;
     int64_t nValueIn = 0;
 
-    if (!SelectCoinsForStaking(nBalance - nReserveBalance,  GetAdjustedTime(), setCoins))
+    if (!SelectCoinsForStaking(GetAdjustedTime(), setCoins))
         return false;
 
     if (setCoins.empty())

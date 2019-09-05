@@ -35,7 +35,6 @@ double GetLastPaymentTimeByCPID(std::string cpid);
 bool HasActiveBeacon(const std::string& cpid);
 std::string SerializeBoincBlock(MiningCPID mcpid);
 bool LessVerbose(int iMax1000);
-
 namespace NN { std::string GetPrimaryCpid(); }
 
 namespace {
@@ -440,20 +439,9 @@ bool CreateCoinStake( CBlock &blocknew, CKey &key,
     // Choose coins to use
     set <pair <const CWalletTx*,unsigned int> > CoinsToStake;
 
-    int64_t BalanceToStake = wallet.GetBalance();
-
-    //Request all the coins here, check reserve later
-
-    if (BalanceToStake <= 0)
-        return BreakForNoCoins(MinerStatus, _("No coins"));
-
-    BalanceToStake -= nReserveBalance;
-
-    if (BalanceToStake <= 0)
-        return BreakForNoCoins(MinerStatus, _("Entire balance reserved"));
-
-    else if (!wallet.SelectCoinsForStaking(BalanceToStake, txnew.nTime, CoinsToStake))
-        return BreakForNoCoins(MinerStatus, _("Waiting for coins to mature"));
+    // this changes
+    if (!wallet.SelectCoinsForStaking(txnew.nTime, CoinsToStake))
+        return false;
 
     if(fDebug2) LogPrintf("CreateCoinStake: Staking nTime/16= %d Bits= %u",
     txnew.nTime/16,blocknew.nBits);
@@ -476,13 +464,6 @@ bool CreateCoinStake( CBlock &blocknew, CKey &key,
             if (!CoinBlock.ReadFromDisk(txindex.pos.nFile, txindex.pos.nBlockPos, false))
                 continue;
         }
-
-        // only count coins meeting min age requirement
-        if (CoinBlock.GetBlockTime() + nStakeMinAge > txnew.nTime)
-            continue;
-
-        if (CoinTx.vout[CoinTxN].nValue > BalanceToStake)
-            continue;
 
         {
             int64_t nStakeValue= CoinTx.vout[CoinTxN].nValue;
