@@ -1,6 +1,5 @@
 #include "beacon.h"
 #include "block.h"
-#include "util.h"
 #include "uint256.h"
 #include "key.h"
 #include "main.h"
