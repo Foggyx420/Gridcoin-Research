@@ -66,6 +66,17 @@ public:
             const std::string& url,
             const std::string& userpass = "");
 
+    //!
+    //! \brief Fetch github release information.
+    //!
+    //! Downloads the json data from github that contains information about latest releases.
+    //!
+    //! \param url URL to fetch json from.
+    //! \throws HttpException on invalid server response.
+    //!
+    std::string GetLatestVersionResponse(
+            const std::string& url);
+
 private:
     void EvaluateResponse(int code, const std::string& url);
 };

@@ -130,6 +130,7 @@ GRIDCOIN_CORE_H = \
 	txdb-leveldb.h \
 	ui_interface.h \
 	uint256.h \
+        upgrade.h \
 	util/memory.h \
 	util.h \
 	version.h \
@@ -192,6 +193,7 @@ GRIDCOIN_CORE_CPP = addrdb.cpp \
 	sync.cpp \
 	tally.cpp \
 	txdb-leveldb.cpp \
+        upgrade.cpp \
 	util.cpp \
 	version.cpp \
 	wallet.cpp \

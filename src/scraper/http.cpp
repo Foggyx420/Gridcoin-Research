@@ -141,6 +141,36 @@ std::string Http::GetEtag(
         _log(logattribute::INFO, "curl_http_header", "Captured ETag for project url <urlfile=" + url + ", ETag=" + etag + ">");
 }
 
+std::string Http::GetLatestVersionResponse(const std::string& url)
+{
+    std::string buffer;
+    std::string header;
+
+    struct curl_slist* headers = NULL;
+    headers = curl_slist_append(headers, "Accept: */*");
+    headers = curl_slist_append(headers, "User-Agent: curl/7.63.0");
+
+    ScopedCurl curl = GetContext();
+    curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, curl_write_string);
+    curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &buffer);
+    curl_easy_setopt(curl.get(), CURLOPT_HEADERDATA, &header);
+    curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, headers);
+
+    CURLcode res = curl_easy_perform(curl.get());
+
+    if (res > 0)
+        throw std::runtime_error(tfm::format("Failed to get ETag for URL %s: %s", url, curl_easy_strerror(res)));
+
+    // Validate HTTP return code.
+    long response_code;
+    curl_easy_getinfo(curl.get(), CURLINFO_RESPONSE_CODE, &response_code);
+    EvaluateResponse(response_code, url);
+
+    // Return the Http response
+    return buffer;
+}
+
 void Http::EvaluateResponse(int code, const std::string& url)
 {
     // Check code to make sure we have success as even a response is considered an OK
