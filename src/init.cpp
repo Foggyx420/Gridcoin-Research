@@ -1040,7 +1040,8 @@ bool AppInit2(ThreadHandlerPtr threads)
         g_banman->DumpBanlist();
     }, DUMP_BANS_INTERVAL * 1000);
 
-    // Check for an update every 24 hours
+    // Check for an update every 24 hours and check now
+    g_UpdateChecker->CheckForLatestUpdate();
     scheduler.scheduleEvery([]{g_UpdateChecker->CheckForLatestUpdate();}, 24 * 60* 60 * 1000);
 
     return true;
