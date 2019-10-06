@@ -162,6 +162,8 @@ std::string Http::GetLatestVersionResponse(const std::string& url)
     if (res > 0)
         throw std::runtime_error(tfm::format("Failed to get ETag for URL %s: %s", url, curl_easy_strerror(res)));
 
+    curl_slist_free_all(headers);
+
     // Validate HTTP return code.
     long response_code;
     curl_easy_getinfo(curl.get(), CURLINFO_RESPONSE_CODE, &response_code);

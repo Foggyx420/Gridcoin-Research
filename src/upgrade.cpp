@@ -7,11 +7,11 @@
 #include <univalue.h>
 #include <vector>
 
-bool Upgrade::CheckForLatestUpdate()
+void Upgrade::CheckForLatestUpdate()
 {
     // If testnet skip this
     if (fTestNet)
-        return false;
+        return;
 
     Http VersionPull;
 
@@ -19,12 +19,16 @@ bool Upgrade::CheckForLatestUpdate()
 
     // We receive the response and it's in a json reply
     UniValue Response(UniValue::VOBJ);
-    std::string VersionResponse = VersionPull.GetLatestVersionResponse(githuburl);
+    std::string VersionResponse = VersionPull.GetLatestVersionResponse("https://api.github.com/repos/gridcoin-community/Gridcoin-Research/releases/latest");
 
     if (VersionResponse.empty())
-        return false;
+    {
+        LogPrintf("Update Checker: No Response from github");
 
-    Response.read(VersionPull.GetLatestVersionResponse(githuburl));
+        return;
+    }
+
+    Response.read(VersionResponse);
 
     // Get the information we need:
     // 'body' for information about changes
@@ -58,7 +62,7 @@ bool Upgrade::CheckForLatestUpdate()
     {
         LogPrintf("Update Check: Got malformed version (%s)", GithubReleaseData);
 
-        return false;
+        return;
     }
 
     bool NewVersion = false;
@@ -79,11 +83,11 @@ bool Upgrade::CheckForLatestUpdate()
     {
         LogPrintf("Update Check: Exception occured checking client version against github version (%s)", ToString(ex.what()));
 
-        return false;
+        return;
     }
 
     if (!NewVersion)
-        return false;
+        return;
 
     // New version was found
     std::string ClientMessage = _("Local version: ") + strprintf("%d.%d.%d.%d", CLIENT_VERSION_MAJOR, CLIENT_VERSION_MINOR, CLIENT_VERSION_REVISION, CLIENT_VERSION_BUILD) + "\r\n";
@@ -92,5 +96,5 @@ bool Upgrade::CheckForLatestUpdate()
     ClientMessage.append(GithubReleaseBody);
     uiInterface.UpdateMessageBox(ClientMessage);
 
-    return true;
+    return;
 }

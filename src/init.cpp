@@ -17,6 +17,7 @@
 #include "scheduler.h"
 #include "neuralnet/neuralnet.h"
 #include "neuralnet/researcher.h"
+#include "upgrade.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -63,7 +64,7 @@ extern boost::filesystem::path pathScraper;
 static constexpr int DUMP_BANS_INTERVAL = 60 * 15;
 
 std::unique_ptr<BanMan> g_banman;
-
+std::unique_ptr<Upgrade> g_UpdateChecker;
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1039,6 +1040,8 @@ bool AppInit2(ThreadHandlerPtr threads)
         g_banman->DumpBanlist();
     }, DUMP_BANS_INTERVAL * 1000);
 
+    // Check for an update every 24 hours
+    scheduler.scheduleEvery([]{g_UpdateChecker->CheckForLatestUpdate();}, 24 * 60* 60 * 1000);
 
     return true;
 }
