@@ -6,6 +6,15 @@
 #include <algorithm>
 #include <univalue.h>
 #include <vector>
+#include <boost/thread.hpp>
+
+bool SnapshotDownloadComplete = false;
+bool SnapshotDownloadFailed = false;
+
+Upgrade::Upgrade()
+{
+
+}
 
 void Upgrade::CheckForLatestUpdate()
 {
@@ -101,5 +110,34 @@ void Upgrade::CheckForLatestUpdate()
 
 bool Upgrade::SnapshotRequested()
 {
+     // Create a thread for the Snapshot download
+    boost::thread SnapshotThread(std::bind(&Upgrade::DownloadSnapshot, this)); // thread runs free
 
+    while (!SnapshotDownloadComplete)
+    {
+        if (SnapshotDownloadFailed)
+        {
+            LogPrintf("Snapshot Downloader: Failed to download snapshot!");
+
+            return false;
+        }
+
+        LogPrintf("Snapshot Downloader: File size %" PRId64, SnapshotDownloadSize);
+        LogPrintf("Snapshot Downloader: Speed %" PRId64, SnapshotDownloadSpeed);
+        LogPrintf("Snapshot Downloader: Progress %" PRId64, SnapshotDownloadProgress);
+
+        MilliSleep(3000);
+    }
+
+    return true;
+}
+
+void Upgrade::DownloadSnapshot()
+{
+     // Download the snapshot.zip
+    Http HTTPHandler;
+
+    HTTPHandler.DownloadSnapshot("https://download.gridcoin.us/download/downloadstake/signed/snapshot.zip", GetDataDir().string() + "/snapshot.zip");
+
+    return;
 }

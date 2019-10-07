@@ -40,8 +40,6 @@ public:
     //!
     ~Http();
 
-    bool SnapshotDownloadComplete;
-
     //!
     //! \brief Download file from server.
     //!
@@ -95,6 +93,16 @@ public:
     void DownloadSnapshot(
             const std::string& url,
             const std::string& destination);
+    //!
+    //! \brief Fetch the sha256sum from snapshot server.
+    //!
+    //! Fetches the snapshot sha256 from snapshot server.
+    //!
+    //! \param url URL of the snapshot.zip.sha256
+    //! \return the sha256sum from file
+    //! \throws HttpException on invalid server response.
+    //!
+    std::string GetSnapshotSHA256(const std::string& url);
 
 private:
     void EvaluateResponse(int code, const std::string& url);

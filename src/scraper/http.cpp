@@ -15,12 +15,18 @@
    for compile. */
 #define timetype curl_off_t
 #define timeopt CURLINFO_TOTAL_TIME_T
-#define progressinterval 2000000
+#define progressinterval 3000000
 #else
 #define timetype double
 #define timeopt CURLINFO_TOTAL_TIME
-#define progressinterval 2
+#define progressinterval 3
 #endif
+
+int64_t SnapshotDownloadSpeed;
+int64_t SnapshotDownloadProgress;
+int64_t SnapshotDownloadSize;
+extern bool SnapshotDownloadComplete;
+extern bool SnapshotDownloadFailed;
 
 enum class logattribute {
     // Can't use ERROR here because it is defined already in windows.h.
@@ -66,7 +72,7 @@ namespace
     }
 
     struct progress {
-      curl_off_t lastruntime; /* type depends on version, see above */
+      timetype lastruntime; /* type depends on version, see above */
       CURL *curl;
     };
 
@@ -81,19 +87,24 @@ namespace
         timetype currenttime = 0;
         curl_easy_getinfo(curl, timeopt, &currenttime);
 
+        LogPrintf("Snapshot Downloader Debug: Current time %" PRId64 " last time %" PRId64, currenttime, pg->lastruntime);
+
         // Update every 3 seconds
         if ((currenttime - pg->lastruntime) >= progressinterval)
         {
+            pg->lastruntime = currenttime;
+
             curl_off_t speed;
             CURLcode result;
 
-            result = curl_east_getinfo(curl, CURLINFO_SPEED_DOWNLOAD_T, &speed);
+            result = curl_easy_getinfo(curl, CURLINFO_SPEED_DOWNLOAD_T, &speed);
 
             // Download speed update
             if (result == CURLE_OK)
             {
 
 #if LIBCURL_VERSION_NUM >= 0x073700
+                LogPrintf("Snapshot Downloader Debug: Download Speed %" PRId64, speed);
                 if (speed > 0)
                      SnapshotDownloadSpeed = speed;
 
@@ -108,8 +119,6 @@ namespace
 
                 SnapshotDownloadProgress = downnow;
             }
-
-            pg->lastruntime = currenttime;
         }
 
         return 0;
@@ -211,6 +220,8 @@ std::string Http::GetEtag(
     // This needs to go away for production along with the above external function declaration and the fixup enum to support _log here.
     if (fDebug)
         _log(logattribute::INFO, "curl_http_header", "Captured ETag for project url <urlfile=" + url + ", ETag=" + etag + ">");
+
+    return etag;
 }
 
 std::string Http::GetLatestVersionResponse(const std::string& url)
@@ -249,33 +260,119 @@ void Http::DownloadSnapshot(
         const std::string &url,
         const std::string &destination)
 {
-    struct progress fileprogress;
-
     ScopedFile fp(fopen(destination.c_str(), "wb"), &fclose);
+
     if(!fp)
+    {
+        SnapshotDownloadFailed = true;
+
         throw std::runtime_error(
                 tfm::format("Error opening target %s: %s (%d)", destination, strerror(errno), errno));
-
+    }
     std::string buffer;
-    ScopedCurl curl = GetContext();
+    std::string header;
 
-    curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, curl_write_file);
-    curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, fp.get());
+    struct curl_slist* headers = NULL;
+    headers = curl_slist_append(headers, "Accept: */*");
+    headers = curl_slist_append(headers, "User-Agent: curl/7.63.0");
+
+    CURL* curl;
+    curl = curl_easy_init();
+
+    struct progress fileprogress;
+
+    fileprogress.lastruntime = 0;
+    fileprogress.curl = curl;
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_PROXY, "");
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_UNRESTRICTED_AUTH, 1L);
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 0);
+    curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 10000L);
+    curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 60L);
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_file);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp.get());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
 #if LIBCURL_VERSION_NUM >= 0x072000
-    curl_easy_setopt(curl.get(), CURLOPT_XFERINFOFUNCTION, newerprogress_callback);
-    curl_easy_setopt(curl.get(), CURLOPT_XFERINFODATA, &fileprogress);
+    curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, newerprogress_callback);
+    curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &fileprogress);
 #else
-    curl_easy_setopt(curl.get(), CURLOPT_PROGRESSFUNCTION, olderprogress_callback);
-    curl_east_setopt(curl.get(), CURLOPT_PROGRESSDATA, &fileprogress);
+    curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, olderprogress_callback);
+    curl_east_setopt(curl, CURLOPT_PROGRESSDATA, &fileprogress);
 #endif
 
-    curl_easy_setopt(curl.get(), CURLOPT_NOPROGRESS, 0L);
+    curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+
+    CURLcode res = curl_easy_perform(curl);
+
+    curl_slist_free_all(headers);
+
+    if (res > 0)
+    {
+        SnapshotDownloadFailed = true;
+
+        throw std::runtime_error(tfm::format("Failed to download file %s: %s", url, curl_easy_strerror(res)));
+    }
+
+    SnapshotDownloadComplete = true;
+
+    return;
+}
+
+std::string Http::GetSnapshotSHA256(const std::string& url)
+{
+    std::string buffer;
+    std::string header;
+
+    struct curl_slist* headers = NULL;
+    headers = curl_slist_append(headers, "Accept: */*");
+    headers = curl_slist_append(headers, "User-Agent: curl/7.63.0");
+
+    ScopedCurl curl = GetContext();
+    curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, curl_write_string);
+    curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &buffer);
+    curl_easy_setopt(curl.get(), CURLOPT_HEADERDATA, &header);
+    curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, headers);
 
     CURLcode res = curl_easy_perform(curl.get());
+
     if (res > 0)
-        throw std::runtime_error(tfm::format("Failed to download file %s: %s", url, curl_easy_strerror(res)));
+    {
+        SnapshotDownloadFailed = true;
+
+        throw std::runtime_error(tfm::format("Failed to SHA256SUM of snapshot.zip for URL %s: %s", url, curl_easy_strerror(res)));
+    }
+
+    if (buffer.empty())
+    {
+        LogPrintf("Snapshot Downloader: Failed to receive SHA256SUM from url: %s", url);
+
+        SnapshotDownloadFailed = true;
+
+        return "";
+
+    }
+    size_t loc = buffer.find(" ");
+
+    if (loc == std::string::npos)
+    {
+        LogPrintf("Snapshot Downloader: Malformed SHA256SUM from url: %s", url);
+
+        SnapshotDownloadFailed = true;
+
+        return "";
+    }
+
+    else
+    {
+        if (fDebug)
+            LogPrintf("Snapshot Downloader: Receives SHA256SUM of %s", buffer.substr(0, loc));
+
+        return buffer.substr(0, loc);
+    }
 }
 
 void Http::EvaluateResponse(int code, const std::string& url)

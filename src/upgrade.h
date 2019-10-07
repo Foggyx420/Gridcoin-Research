@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+
 /*
  * A Class to support update checks and well as to be built on for future use with snapshot download and apply
  *
@@ -15,7 +16,8 @@ public:
     void CheckForLatestUpdate();
     /** Start the Snapshot Process **/
     bool SnapshotRequested();
-
+    /** Download Snapshot **/
+    void DownloadSnapshot();
 private:
 };
 
