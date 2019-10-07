@@ -98,3 +98,8 @@ void Upgrade::CheckForLatestUpdate()
 
     return;
 }
+
+bool Upgrade::SnapshotRequested()
+{
+
+}

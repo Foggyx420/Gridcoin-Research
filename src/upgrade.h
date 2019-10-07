@@ -13,6 +13,10 @@ public:
     Upgrade();
     /** Check Github for latest version information **/
     void CheckForLatestUpdate();
+    /** Start the Snapshot Process **/
+    bool SnapshotRequested();
+
+private:
 };
 
 extern std::unique_ptr<Upgrade> g_UpdateChecker;

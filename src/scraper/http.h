@@ -3,6 +3,11 @@
 #include <string>
 #include <stdexcept>
 
+/** Call backs are in namespace so these must be here in the header **/
+extern int64_t SnapshotDownloadSpeed;
+extern int64_t SnapshotDownloadProgress;
+extern int64_t SnapshotDownloadSize;
+
 //!
 //! \brief HTTP exception.
 //!
@@ -34,6 +39,8 @@ public:
     //! \brief Destructor.
     //!
     ~Http();
+
+    bool SnapshotDownloadComplete;
 
     //!
     //! \brief Download file from server.
@@ -76,6 +83,18 @@ public:
     //!
     std::string GetLatestVersionResponse(
             const std::string& url);
+    //!
+    //! \brief Download Snapshot with progress updates.
+    //!
+    //! Downloads the snapshot from the latest snapshot.zip hosted on gridcoin.us.
+    //!
+    //! \param url URL of the snapshot.zip.
+    //! \param destination Destination of the snapshot file.
+    //! \throws HttpException on invalid server response.
+    //!
+    void DownloadSnapshot(
+            const std::string& url,
+            const std::string& destination);
 
 private:
     void EvaluateResponse(int code, const std::string& url);

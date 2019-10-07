@@ -9,6 +9,19 @@
 // Only for troubleshooting. This should be removed before production.
 #include "util.h"
 
+#if LIBCURL_VERSION_NUM >= 0x073d00
+/* In libcurl 7.61.0, support was added for extracting the time in plain
+   microseconds. Lets make this so we can allow a user using own depends
+   for compile. */
+#define timetype curl_off_t
+#define timeopt CURLINFO_TOTAL_TIME_T
+#define progressinterval 2000000
+#else
+#define timetype double
+#define timeopt CURLINFO_TOTAL_TIME
+#define progressinterval 2
+#endif
+
 enum class logattribute {
     // Can't use ERROR here because it is defined already in windows.h.
     ERR,
@@ -51,6 +64,65 @@ namespace
 
         return curl;
     }
+
+    struct progress {
+      curl_off_t lastruntime; /* type depends on version, see above */
+      CURL *curl;
+    };
+
+    static int newerprogress_callback(void *ptr, curl_off_t downtotal, curl_off_t downnow, curl_off_t uptotal, curl_off_t uplnow)
+    {
+        // Set this once.
+        if (SnapshotDownloadSize == 0)
+            SnapshotDownloadSize = downtotal;
+
+        struct progress *pg = (struct progress*)ptr;
+        CURL *curl = pg->curl;
+        timetype currenttime = 0;
+        curl_easy_getinfo(curl, timeopt, &currenttime);
+
+        // Update every 3 seconds
+        if ((currenttime - pg->lastruntime) >= progressinterval)
+        {
+            curl_off_t speed;
+            CURLcode result;
+
+            result = curl_east_getinfo(curl, CURLINFO_SPEED_DOWNLOAD_T, &speed);
+
+            // Download speed update
+            if (result == CURLE_OK)
+            {
+
+#if LIBCURL_VERSION_NUM >= 0x073700
+                if (speed > 0)
+                     SnapshotDownloadSpeed = speed;
+
+                else {
+                    SnapshotDownloadSpeed = 0;
+
+                }
+#else
+                // Not supported by libcurl
+                SnapshotDownloadSpeed = -1;
+#endif
+
+                SnapshotDownloadProgress = downnow;
+            }
+
+            pg->lastruntime = currenttime;
+        }
+
+        return 0;
+    };
+
+#if LIBCURL_VERSION_NUM < 0x072000
+    static int olderprogress_callback(void *ptr, double downtotal, double downnow, double uptotal, double upnow)
+    {
+        return newerprogress_callback(ptr, (curl_off_t)downtotal, (curl_off_t)downnow, (curl_off_t)uptotal, (curl_off_t)uptotal, (curl_off_t)upnow);
+    };
+
+#endif
+
 }
 
 Http::Http()
@@ -171,6 +243,39 @@ std::string Http::GetLatestVersionResponse(const std::string& url)
 
     // Return the Http response
     return buffer;
+}
+
+void Http::DownloadSnapshot(
+        const std::string &url,
+        const std::string &destination)
+{
+    struct progress fileprogress;
+
+    ScopedFile fp(fopen(destination.c_str(), "wb"), &fclose);
+    if(!fp)
+        throw std::runtime_error(
+                tfm::format("Error opening target %s: %s (%d)", destination, strerror(errno), errno));
+
+    std::string buffer;
+    ScopedCurl curl = GetContext();
+
+    curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, curl_write_file);
+    curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, fp.get());
+
+#if LIBCURL_VERSION_NUM >= 0x072000
+    curl_easy_setopt(curl.get(), CURLOPT_XFERINFOFUNCTION, newerprogress_callback);
+    curl_easy_setopt(curl.get(), CURLOPT_XFERINFODATA, &fileprogress);
+#else
+    curl_easy_setopt(curl.get(), CURLOPT_PROGRESSFUNCTION, olderprogress_callback);
+    curl_east_setopt(curl.get(), CURLOPT_PROGRESSDATA, &fileprogress);
+#endif
+
+    curl_easy_setopt(curl.get(), CURLOPT_NOPROGRESS, 0L);
+
+    CURLcode res = curl_easy_perform(curl.get());
+    if (res > 0)
+        throw std::runtime_error(tfm::format("Failed to download file %s: %s", url, curl_easy_strerror(res)));
 }
 
 void Http::EvaluateResponse(int code, const std::string& url)
