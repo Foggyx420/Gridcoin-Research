@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "scraper/http.h"
+
 /*
  * A Class to support update checks and well as to be built on for future use with snapshot download and apply
  *

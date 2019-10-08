@@ -6,7 +6,7 @@
 #include <univalue.h>
 #include <vector>
 #include <boost/thread.hpp>
-
+#include <zip.h>
 Upgrade::Upgrade()
 {
 
