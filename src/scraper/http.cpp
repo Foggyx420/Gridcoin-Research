@@ -22,11 +22,7 @@
 #define progressinterval 3
 #endif
 
-int64_t SnapshotDownloadSpeed;
-int64_t SnapshotDownloadProgress;
-int64_t SnapshotDownloadSize;
-extern bool SnapshotDownloadComplete;
-extern bool SnapshotDownloadFailed;
+struct_SnapshotStatus Status;
 
 enum class logattribute {
     // Can't use ERROR here because it is defined already in windows.h.
@@ -72,22 +68,20 @@ namespace
     }
 
     struct progress {
-      timetype lastruntime; /* type depends on version, see above */
+      timetype lastruntime;
       CURL *curl;
     };
 
     static int newerprogress_callback(void *ptr, curl_off_t downtotal, curl_off_t downnow, curl_off_t uptotal, curl_off_t uplnow)
     {
         // Set this once.
-        if (SnapshotDownloadSize == 0)
-            SnapshotDownloadSize = downtotal;
+        if (Status.SnapshotDownloadSize == 0)
+            Status.SnapshotDownloadSize = downtotal;
 
         struct progress *pg = (struct progress*)ptr;
         CURL *curl = pg->curl;
         timetype currenttime = 0;
         curl_easy_getinfo(curl, timeopt, &currenttime);
-
-        LogPrintf("Snapshot Downloader Debug: Current time %" PRId64 " last time %" PRId64, currenttime, pg->lastruntime);
 
         // Update every 3 seconds
         if ((currenttime - pg->lastruntime) >= progressinterval)
@@ -104,20 +98,19 @@ namespace
             {
 
 #if LIBCURL_VERSION_NUM >= 0x073700
-                LogPrintf("Snapshot Downloader Debug: Download Speed %" PRId64, speed);
                 if (speed > 0)
-                     SnapshotDownloadSpeed = speed;
+                     Status.SnapshotDownloadSpeed = speed;
 
                 else {
-                    SnapshotDownloadSpeed = 0;
+                    Status.SnapshotDownloadSpeed = 0;
 
                 }
 #else
                 // Not supported by libcurl
-                SnapshotDownloadSpeed = -1;
+                Status.SnapshotDownloadSpeed = -1;
 #endif
-
-                SnapshotDownloadProgress = downnow;
+                if (Status.SnapshotDownloadSize > 0 && Status.SnapshotDownloadProgress > 0)
+                    Status.SnapshotDownloadProgress = (downnow / Status.SnapshotDownloadSize) * 100;
             }
         }
 
@@ -221,7 +214,7 @@ std::string Http::GetEtag(
     if (fDebug)
         _log(logattribute::INFO, "curl_http_header", "Captured ETag for project url <urlfile=" + url + ", ETag=" + etag + ">");
 
-    return etag;
+    return "";
 }
 
 std::string Http::GetLatestVersionResponse(const std::string& url)
@@ -264,10 +257,10 @@ void Http::DownloadSnapshot(
 
     if(!fp)
     {
-        SnapshotDownloadFailed = true;
+        Status.SnapshotDownloadFailed = true;
 
         throw std::runtime_error(
-                tfm::format("Error opening target %s: %s (%d)", destination, strerror(errno), errno));
+                tfm::format("Snapshot Downloader: Error opening target %s: %s (%d)", destination, strerror(errno), errno));
     }
     std::string buffer;
     std::string header;
@@ -311,12 +304,12 @@ void Http::DownloadSnapshot(
 
     if (res > 0)
     {
-        SnapshotDownloadFailed = true;
+        Status.SnapshotDownloadFailed = true;
 
-        throw std::runtime_error(tfm::format("Failed to download file %s: %s", url, curl_easy_strerror(res)));
+        throw std::runtime_error(tfm::format("Snapshot Downloader: Failed to download file %s: %s", url, curl_easy_strerror(res)));
     }
 
-    SnapshotDownloadComplete = true;
+    Status.SnapshotDownloadComplete = true;
 
     return;
 }
@@ -339,18 +332,20 @@ std::string Http::GetSnapshotSHA256(const std::string& url)
 
     CURLcode res = curl_easy_perform(curl.get());
 
+    curl_slist_free_all(headers);
+
     if (res > 0)
     {
-        SnapshotDownloadFailed = true;
+        Status.SnapshotDownloadFailed = true;
 
-        throw std::runtime_error(tfm::format("Failed to SHA256SUM of snapshot.zip for URL %s: %s", url, curl_easy_strerror(res)));
+        throw std::runtime_error(tfm::format("Snapshot Downloader:  Failed to SHA256SUM of snapshot.zip for URL %s: %s", url, curl_easy_strerror(res)));
     }
 
     if (buffer.empty())
     {
         LogPrintf("Snapshot Downloader: Failed to receive SHA256SUM from url: %s", url);
 
-        SnapshotDownloadFailed = true;
+        Status.SnapshotDownloadFailed = true;
 
         return "";
 
@@ -361,7 +356,7 @@ std::string Http::GetSnapshotSHA256(const std::string& url)
     {
         LogPrintf("Snapshot Downloader: Malformed SHA256SUM from url: %s", url);
 
-        SnapshotDownloadFailed = true;
+        Status.SnapshotDownloadFailed = true;
 
         return "";
     }

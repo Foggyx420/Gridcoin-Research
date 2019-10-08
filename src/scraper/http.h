@@ -3,10 +3,15 @@
 #include <string>
 #include <stdexcept>
 
-/** Call backs are in namespace so these must be here in the header **/
-extern int64_t SnapshotDownloadSpeed;
-extern int64_t SnapshotDownloadProgress;
-extern int64_t SnapshotDownloadSize;
+struct struct_SnapshotStatus{
+    bool SnapshotDownloadComplete = false;
+    bool SnapshotDownloadFailed = false;
+    int64_t SnapshotDownloadSpeed;
+    double SnapshotDownloadProgress;
+    int64_t SnapshotDownloadSize;
+};
+
+extern struct_SnapshotStatus Status;
 
 //!
 //! \brief HTTP exception.

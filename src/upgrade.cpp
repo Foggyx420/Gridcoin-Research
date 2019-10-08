@@ -1,5 +1,4 @@
 #include "upgrade.h"
-#include "scraper/http.h"
 #include "util.h"
 #include "ui_interface.h"
 
@@ -7,9 +6,6 @@
 #include <univalue.h>
 #include <vector>
 #include <boost/thread.hpp>
-
-bool SnapshotDownloadComplete = false;
-bool SnapshotDownloadFailed = false;
 
 Upgrade::Upgrade()
 {
@@ -113,18 +109,24 @@ bool Upgrade::SnapshotRequested()
      // Create a thread for the Snapshot download
     boost::thread SnapshotThread(std::bind(&Upgrade::DownloadSnapshot, this)); // thread runs free
 
-    while (!SnapshotDownloadComplete)
+    while (!Status.SnapshotDownloadComplete)
     {
-        if (SnapshotDownloadFailed)
+        if (Status.SnapshotDownloadFailed)
         {
             LogPrintf("Snapshot Downloader: Failed to download snapshot!");
 
             return false;
         }
 
-        LogPrintf("Snapshot Downloader: File size %" PRId64, SnapshotDownloadSize);
-        LogPrintf("Snapshot Downloader: Speed %" PRId64, SnapshotDownloadSpeed);
-        LogPrintf("Snapshot Downloader: Progress %" PRId64, SnapshotDownloadProgress);
+        LogPrintf("Snapshot Downloader: File size %" PRId64, Status.SnapshotDownloadSize);
+        if (Status.SnapshotDownloadSpeed < 1000000)
+            LogPrintf("Snapshot Downloader: Speed %.0f KB/s", Status.SnapshotDownloadSpeed / (double)1000);
+
+        else
+            LogPrintf("Snapshot Downloader: Speed %.0f MB/s", Status.SnapshotDownloadSpeed / (double)1000000);
+
+
+        LogPrintf("Snapshot Downloader: Progress %.2f", Status.SnapshotDownloadProgress);
 
         MilliSleep(3000);
     }
