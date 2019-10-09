@@ -20,6 +20,8 @@ public:
     bool SnapshotRequested();
     /** Download Snapshot **/
     void DownloadSnapshot();
+    /** Clean up existing blockchain data **/
+    bool CleanupBlockchainData();
 private:
 };
 
