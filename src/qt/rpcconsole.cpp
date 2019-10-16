@@ -213,8 +213,8 @@ void RPCExecutor::request(const QString &command)
     }
 }
 
-RPCConsole::RPCConsole(QWidget *parent) :
-    QDialog(parent),
+RPCConsole::RPCConsole(QWidget *parent, Qt::WindowFlags f) :
+    QDialog(parent, f),
     ui(new Ui::RPCConsole),
     historyPtr(0)
 {
@@ -225,6 +225,8 @@ RPCConsole::RPCConsole(QWidget *parent) :
     ui->showCLOptionsButton->setIcon(QIcon(":/icons/options"));
 #endif
 
+    // Disable '?' Button on windows dialog
+    this->setWindowFlags(this->windowFlags() & ~Qt::WindowContextHelpButtonHint);
     // Install event filter for up and down arrow
     ui->lineEdit->installEventFilter(this);
     ui->messagesWidget->installEventFilter(this);
