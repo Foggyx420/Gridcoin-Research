@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <memory>
-
+#include <boost/thread.hpp>
 // Only for troubleshooting. This should be removed before production.
 #include "util.h"
 
@@ -19,10 +19,10 @@
 #else
 #define timetype double
 #define timeopt CURLINFO_TOTAL_TIME
-#define progressinterval 3
+#define progressinterval 1
 #endif
 
-struct_SnapshotStatus Status;
+struct_SnapshotStatus DownloadStatus;
 
 enum class logattribute {
     // Can't use ERROR here because it is defined already in windows.h.
@@ -74,44 +74,55 @@ namespace
 
     static int newerprogress_callback(void *ptr, curl_off_t downtotal, curl_off_t downnow, curl_off_t uptotal, curl_off_t uplnow)
     {
-        // Set this once.
-        if (Status.SnapshotDownloadSize == 0)
-            Status.SnapshotDownloadSize = downtotal;
-
         struct progress *pg = (struct progress*)ptr;
         CURL *curl = pg->curl;
-        timetype currenttime = 0;
-        curl_easy_getinfo(curl, timeopt, &currenttime);
 
-        // Update every 3 seconds
-        if ((currenttime - pg->lastruntime) >= progressinterval)
+        // Thread inturrupting
+        try
         {
-            pg->lastruntime = currenttime;
+            boost::this_thread::interruption_point();
+            // Set this once.
+            if (DownloadStatus.SnapshotDownloadSize == 0)
+                DownloadStatus.SnapshotDownloadSize = downtotal;
 
-            curl_off_t speed;
-            CURLcode result;
+            timetype currenttime = 0;
+            curl_easy_getinfo(curl, timeopt, &currenttime);
 
-            result = curl_easy_getinfo(curl, CURLINFO_SPEED_DOWNLOAD_T, &speed);
-
-            // Download speed update
-            if (result == CURLE_OK)
+            // Update every 1 second
+            if ((currenttime - pg->lastruntime) >= progressinterval)
             {
+                pg->lastruntime = currenttime;
+
+                curl_off_t speed;
+                CURLcode result;
+
+                result = curl_easy_getinfo(curl, CURLINFO_SPEED_DOWNLOAD_T, &speed);
+
+                // Download speed update
+                if (result == CURLE_OK)
+                {
 
 #if LIBCURL_VERSION_NUM >= 0x073700
-                if (speed > 0)
-                     Status.SnapshotDownloadSpeed = speed;
+                    if (speed > 0)
+                        DownloadStatus.SnapshotDownloadSpeed = speed;
 
-                else {
-                    Status.SnapshotDownloadSpeed = 0;
+                    else {
+                        DownloadStatus.SnapshotDownloadSpeed = 0;
 
-                }
+                    }
 #else
-                // Not supported by libcurl
-                Status.SnapshotDownloadSpeed = -1;
+                    // Not supported by libcurl
+                    DownloadStatus.SnapshotDownloadSpeed = -1;
 #endif
-                if (Status.SnapshotDownloadSize > 0 && Status.SnapshotDownloadProgress > 0)
-                    Status.SnapshotDownloadProgress = (downnow / Status.SnapshotDownloadSize) * 100;
+                    if (DownloadStatus.SnapshotDownloadSize > 0 && (downnow > 0))
+                        DownloadStatus.SnapshotDownloadProgress = ((downnow / (double)DownloadStatus.SnapshotDownloadSize) * 100);
+                }
             }
+        }
+
+        catch (boost::thread_interrupted&)
+        {
+            return 1;
         }
 
         return 0;
@@ -127,14 +138,18 @@ namespace
 
 }
 
-Http::Http()
+Http::Http(bool Scoped)
 {
-    curl_global_init(CURL_GLOBAL_ALL);
+    fScoped = Scoped;
+
+    if (fScoped)
+        curl_global_init(CURL_GLOBAL_ALL);
 }
 
 Http::~Http()
 {
-    curl_global_cleanup();
+    if (fScoped)
+        curl_global_cleanup();
 }
 
 void Http::Download(
@@ -257,7 +272,7 @@ void Http::DownloadSnapshot(
 
     if(!fp)
     {
-        Status.SnapshotDownloadFailed = true;
+        DownloadStatus.SnapshotDownloadFailed = true;
 
         throw std::runtime_error(
                 tfm::format("Snapshot Downloader: Error opening target %s: %s (%d)", destination, strerror(errno), errno));
@@ -301,15 +316,22 @@ void Http::DownloadSnapshot(
     CURLcode res = curl_easy_perform(curl);
 
     curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
 
     if (res > 0)
     {
-        Status.SnapshotDownloadFailed = true;
+        if (res == CURLE_ABORTED_BY_CALLBACK)
+            return;
 
-        throw std::runtime_error(tfm::format("Snapshot Downloader: Failed to download file %s: %s", url, curl_easy_strerror(res)));
+        else
+        {
+            DownloadStatus.SnapshotDownloadFailed = true;
+
+            throw std::runtime_error(tfm::format("Snapshot Downloader: Failed to download file %s: %s", url, curl_easy_strerror(res)));
+        }
     }
 
-    Status.SnapshotDownloadComplete = true;
+    DownloadStatus.SnapshotDownloadComplete = true;
 
     return;
 }
@@ -336,27 +358,23 @@ std::string Http::GetSnapshotSHA256(const std::string& url)
 
     if (res > 0)
     {
-        Status.SnapshotDownloadFailed = true;
+       LogPrintf("Snapshot (GetSnapshotSHA256):  Failed to SHA256SUM of snapshot.zip for URL %s: %s", url, curl_easy_strerror(res));
 
-        throw std::runtime_error(tfm::format("Snapshot Downloader:  Failed to SHA256SUM of snapshot.zip for URL %s: %s", url, curl_easy_strerror(res)));
+       return "";
     }
 
     if (buffer.empty())
     {
-        LogPrintf("Snapshot Downloader: Failed to receive SHA256SUM from url: %s", url);
-
-        Status.SnapshotDownloadFailed = true;
+        LogPrintf("Snapshot (GetSnapshotSHA256): Failed to receive SHA256SUM from url: %s", url);
 
         return "";
-
     }
+
     size_t loc = buffer.find(" ");
 
     if (loc == std::string::npos)
     {
-        LogPrintf("Snapshot Downloader: Malformed SHA256SUM from url: %s", url);
-
-        Status.SnapshotDownloadFailed = true;
+        LogPrintf("Snapshot (GetSnapshotSHA256): Malformed SHA256SUM from url: %s", url);
 
         return "";
     }

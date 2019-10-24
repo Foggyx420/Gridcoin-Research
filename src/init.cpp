@@ -59,7 +59,7 @@ extern unsigned int nActiveBeforeSB;
 extern bool fExplorer;
 extern bool fUseFastIndex;
 extern boost::filesystem::path pathScraper;
-
+bool fSnapshotRequest = false;
 // Dump addresses to banlist.dat every 15 minutes (900s)
 static constexpr int DUMP_BANS_INTERVAL = 60 * 15;
 
@@ -645,7 +645,7 @@ bool AppInit2(ThreadHandlerPtr threads)
 
     if (!bitdb.Open(GetDataDir()))
     {
-         string msg = strprintf(_("Error initializing database environment %s!"
+        string msg = strprintf(_("Error initializing database environment %s!"
                                  " To recover, BACKUP THAT DIRECTORY, then remove"
                                  " everything from it except for wallet.dat."), strDataDir);
         return InitError(msg);
@@ -791,6 +791,8 @@ bool AppInit2(ThreadHandlerPtr threads)
                                  " everything from it except for wallet.dat."), strDataDir);
         return InitError(msg);
     }
+
+    fSnapshotRequest = false;
 
     if (GetBoolArg("-loadblockindextest"))
     {
@@ -1039,10 +1041,11 @@ bool AppInit2(ThreadHandlerPtr threads)
     scheduler.scheduleEvery([]{
         g_banman->DumpBanlist();
     }, DUMP_BANS_INTERVAL * 1000);
-
+    fprintf(stdout, "before update checker");
     // Check for an update every 24 hours and check now
     g_UpdateChecker->CheckForLatestUpdate();
-    scheduler.scheduleEvery([]{g_UpdateChecker->CheckForLatestUpdate();}, 24 * 60* 60 * 1000);
-
+    fprintf(stdout, "After check for update");
+    //scheduler.scheduleEvery([]{g_UpdateChecker->CheckForLatestUpdate();}, 24 * 60* 60 * 1000);
+    fprintf(stdout, "after update check placed in scheduler");
     return true;
 }

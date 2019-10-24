@@ -14,7 +14,7 @@
 #include "bitcoingui.h"
 #include "transactiontablemodel.h"
 #include "addressbookpage.h"
-
+#include "upgradeutils.h"
 #include "diagnosticsdialog.h"
 #include "sendcoinsdialog.h"
 #include "signverifymessagedialog.h"
@@ -1110,10 +1110,13 @@ void BitcoinGUI::gotoSignMessageTab(QString addr)
 void BitcoinGUI::gotoVerifyMessageTab(QString addr)
 {
     // call show() in showTab_VM()
-    signVerifyMessageDialog->showTab_VM(true);
+    //signVerifyMessageDialog->showTab_VM(true);
 
-    if(!addr.isEmpty())
-        signVerifyMessageDialog->setAddress_VM(addr);
+    //if(!addr.isEmpty())
+      //  signVerifyMessageDialog->setAddress_VM(addr);
+
+    UpgradeUtils test;
+    test.SnapshotMain();
 }
 
 void BitcoinGUI::dragEnterEvent(QDragEnterEvent *event)

@@ -182,7 +182,8 @@ GRIDCOINRESEARCH_QT_H = \
   qt/transactionview.h \
   qt/votingdialog.h \
   qt/walletmodel.h \
-  qt/winshutdownmonitor.h
+  qt/winshutdownmonitor.h \
+  qt/upgradeutils.h
 
 GRIDCOINRESEARCH_QT_CPP = \
   qt/aboutdialog.cpp \
@@ -224,7 +225,8 @@ GRIDCOINRESEARCH_QT_CPP = \
   qt/transactionview.cpp \
   qt/votingdialog.cpp \
   qt/walletmodel.cpp \
-  qt/winshutdownmonitor.cpp
+  qt/winshutdownmonitor.cpp \
+  qt/upgradeutils.cpp
 
 RES_ICONS = \
   qt/res/icons/add.png \

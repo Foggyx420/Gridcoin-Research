@@ -7,11 +7,11 @@ struct struct_SnapshotStatus{
     bool SnapshotDownloadComplete = false;
     bool SnapshotDownloadFailed = false;
     int64_t SnapshotDownloadSpeed;
-    double SnapshotDownloadProgress;
-    int64_t SnapshotDownloadSize;
+    int SnapshotDownloadProgress;
+    long long SnapshotDownloadSize = 0;
 };
 
-extern struct_SnapshotStatus Status;
+extern struct_SnapshotStatus DownloadStatus;
 
 //!
 //! \brief HTTP exception.
@@ -38,7 +38,10 @@ public:
     //!
     //! \brief Constructor.
     //!
-    Http();
+    //! \param Defaultly this will be true but for snapshot we need to use our own curl to avoid issues with a crash from progress monitor.
+    //!        In the destructor we check this as well so when snapshot download being used we don't get seg faulted out over clean up.
+    //!
+    Http(bool Scoped = true);
 
     //!
     //! \brief Destructor.
@@ -111,4 +114,6 @@ public:
 
 private:
     void EvaluateResponse(int code, const std::string& url);
+    /** Downloading snapshot has a progress update function which collaspes when using scoped curl **/
+    bool fScoped;
 };

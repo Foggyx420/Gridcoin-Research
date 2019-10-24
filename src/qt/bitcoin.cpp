@@ -17,7 +17,8 @@
 #include "qtipcserver.h"
 #include "util.h"
 #include "winshutdownmonitor.h"
-
+#include "upgradeutils.h"
+#include "upgrade.h"
 #include <QMessageBox>
 #include <QDebug>
 #include <QTextCodec>
@@ -57,6 +58,8 @@ Q_IMPORT_PLUGIN(QSvgIconPlugin);
 // Need a global reference for the notifications to find the GUI
 static BitcoinGUI *guiref;
 static QSplashScreen *splashref;
+
+int StartGridcoinQt(int argc, char *argv[]);
 
 static void ThreadSafeMessageBox(const std::string& message, const std::string& caption, int style)
 {
@@ -198,24 +201,75 @@ static void handleRunawayException(std::exception *e)
 #ifndef BITCOIN_QT_TEST
 int main(int argc, char *argv[])
 {
-    // Set default value to exit properly. Exit code 42 will trigger restart of the wallet.
-    int currentExitCode = 0;
- 
+    // Do this early as we don't want to bother initializing if we are just calling IPC
+    ipcScanRelay(argc, argv);
+
+    // Command-line options take precedence:
+    // Before this would of been done in main then config file loaded.
+    // But we need to check for snapshot argument anyway so doing so here is safe.
+    ParseParameters(argc, argv);
+
+    // Here we do it if it was started with the snapshot argument
+    if (mapArgs.count("-snapshotdownload"))
+    {
+        Upgrade Snapshot;
+
+        // Let's check make sure gridcoin is not already running in the data directory.
+        if (Snapshot.IsDataDirInUse())
+        {
+            fprintf(stderr, "Cannot obtain a lock on data directory %s.  Gridcoin is probably already running.", GetDataDir().string().c_str());
+
+            exit(1);
+        }
+
+        else
+            Snapshot.SnapshotMain();
+    }
+
+
+
+    StartGridcoinQt(argc, argv);
+
+    // We got this request and everything should be shutdown now.
+    // Except what we cannot shutdown. In future we will goto before
+    // StartGridcoinQt when all database enviroments are set as pointers
+    // That go out of scope and not linger after going out of scope.
+    // The linger does not affect the snapshot process but prevents restart of wallet within main area
+    // This is only if the GUI menu option was used!
+    if (fSnapshotRequest)
+    {
+        UpgradeUtils test;
+
+        if (test.SnapshotMain())
+            LogPrintf("Snapshot: Success!");
+
+        else
+        {
+            if (fCancelOperation)
+                LogPrintf("Snapshot: Failed!; Canceled by user.");
+
+            else
+                LogPrintf("Sanpshot: Failed!");
+        }
+    }
+
+    return 0;
+}
+
+int StartGridcoinQt(int argc, char *argv[])
+{
     // Set global boolean to indicate intended presence of GUI to core.
     fQtActive = true;
 
     std::shared_ptr<ThreadHandler> threads = std::make_shared<ThreadHandler>();
 
-    // Do this early as we don't want to bother initializing if we are just calling IPC
-    ipcScanRelay(argc, argv);
-
     Q_INIT_RESOURCE(bitcoin);
     Q_INIT_RESOURCE(bitcoin_locale);
     QApplication app(argc, argv);
-	//uint SEM_FAILCRITICALERRORS= 0x0001;
-	//uint SEM_NOGPFAULTERRORBOX = 0x0002;
+    //uint SEM_FAILCRITICALERRORS= 0x0001;
+    //uint SEM_NOGPFAULTERRORBOX = 0x0002;
 #if defined(WIN32) && defined(QT_GUI)
-	SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
+    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 #endif
 
     // Install global event filter that makes sure that long tooltips can be word-wrapped
@@ -233,10 +287,7 @@ int main(int argc, char *argv[])
     qInstallMessageHandler(DebugMessageHandler);
 #endif
 
-    // Command-line options take precedence:
-    ParseParameters(argc, argv);
-
-    // ... then bitcoin.conf:
+    // bitcoin.conf:
     if (!boost::filesystem::is_directory(GetDataDir(false)))
     {
         // This message can not be translated, as translation is not initialized yet
@@ -289,7 +340,7 @@ int main(int argc, char *argv[])
     // Subscribe to global signals from core
     uiInterface.ThreadSafeMessageBox.connect(ThreadSafeMessageBox);
     uiInterface.ThreadSafeAskFee.connect(ThreadSafeAskFee);
-	uiInterface.ThreadSafeAskQuestion.connect(ThreadSafeAskQuestion);
+    uiInterface.ThreadSafeAskQuestion.connect(ThreadSafeAskQuestion);
 
     uiInterface.ThreadSafeHandleURI.connect(ThreadSafeHandleURI);
     uiInterface.InitMessage.connect(InitMessage);
@@ -328,24 +379,24 @@ int main(int argc, char *argv[])
         BitcoinGUI window;
         guiref = &window;
 
-		QTimer *timer = new QTimer(guiref);
-		LogPrintf("Starting Gridcoin");
+        QTimer *timer = new QTimer(guiref);
+        LogPrintf("Starting Gridcoin");
 
-		QObject::connect(timer, SIGNAL(timeout()), guiref, SLOT(timerfire()));
+        QObject::connect(timer, SIGNAL(timeout()), guiref, SLOT(timerfire()));
 
       if (!threads->createThread(ThreadAppInit2,threads,"AppInit2 Thread"))
-		{
-				LogPrintf("Error; NewThread(ThreadAppInit2) failed");
-		        return 1;
-		}
-		else
-	    {
-			 //10-31-2015
-			while (!bGridcoinGUILoaded)
-			{
-				app.processEvents();
-				MilliSleep(300);
-			}
+        {
+                LogPrintf("Error; NewThread(ThreadAppInit2) failed");
+                return 1;
+        }
+        else
+        {
+             //10-31-2015
+            while (!bGridcoinGUILoaded)
+            {
+                app.processEvents();
+                MilliSleep(300);
+            }
 
             {
                 // Put this in a block, so that the Model objects are cleaned up before
@@ -369,7 +420,7 @@ int main(int argc, char *argv[])
                 {
                     window.show();
                 }
-				timer->start(5000);
+                timer->start(5000);
 
                 // Place this here as guiref has to be defined if we don't want to lose URIs
                 ipcInit(argc, argv);
@@ -378,7 +429,7 @@ int main(int argc, char *argv[])
                 WinShutdownMonitor::registerShutdownBlockReason(QObject::tr("%1 didn't yet exit safely...").arg(QObject::tr(PACKAGE_NAME)), (HWND)window.winId());
 #endif
 
-                currentExitCode = app.exec();
+                int currentExitCode = app.exec();
 
                 window.hide();
                 window.setClientModel(0);
@@ -386,17 +437,17 @@ int main(int argc, char *argv[])
                 guiref = 0;
             }
             // Shutdown the core and its threads, but don't exit Bitcoin-Qt here
-			LogPrintf("Main calling Shutdown...");
+            LogPrintf("Main calling Shutdown...");
             Shutdown(NULL);
         }
 
     }
-	catch (std::exception& e)
-	{
+    catch (std::exception& e)
+    {
         handleRunawayException(&e);
     }
-	catch (...)
-	{
+    catch (...)
+    {
         handleRunawayException(NULL);
     }
 
@@ -405,12 +456,7 @@ int main(int argc, char *argv[])
     threads->removeAll();
     threads.reset();
 
-    // Current exit code was previously introduced to trigger a wallet restart
-    // when set to the value of 42. This feature was removed.
-    if (fDebug) {
-        LogPrintf("Exit code: %d", currentExitCode);
-    }
-
     return 0;
 }
+
 #endif // BITCOIN_QT_TEST
