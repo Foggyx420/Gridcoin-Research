@@ -12,6 +12,7 @@ struct struct_SnapshotStatus{
     int64_t SnapshotDownloadSpeed;
     int SnapshotDownloadProgress;
     long long SnapshotDownloadSize = 0;
+    long long SnapshotDownloadAmount = 0;
 };
 
 extern struct_SnapshotStatus DownloadStatus;
