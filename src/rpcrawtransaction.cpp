@@ -100,7 +100,46 @@ std::vector<std::pair<std::string, std::string>> GetTxNormalBoincHashInfo(const 
             res.push_back(std::make_pair(_("Message Length"), ToString(msg.length())));
 
         std::string sMessageType = ExtractXML(msg, "<MT>", "</MT>");
-        std::string sTxMessage = ExtractXML(msg, "<MESSAGE>", "</MESSAGE>");
+
+        // Message system v2 with support for previous message system
+        // We wont have to worry about a message containing both.
+        std::string sTxMessage = "";
+
+        std::string sLegacyMessage = ExtractXML(msg, "<MESSAGE>", "</MESSAGE>");
+
+        if (!sLegacyMessage.empty())
+            sTxMessage = sLegacyMessage;
+
+        else
+        {
+            // v2 Messages
+            std::string sv2Messages = ExtractXML(msg, "<MSG>", "</MSG>");
+
+            if (!sv2Messages.empty())
+            {
+                // Search to find out which vouts are ours
+                for (unsigned int x = 0; x < mtx.vout.size(); x++)
+                {
+                    if (pwalletMain->IsMine(mtx.vout[x]))
+                    {
+
+                        std::string keystart = "<" + ToString(x) + ">";
+                        std::string keyend = "</" + ToString(x) + ">";
+                        std::string sv2Msg = ExtractXML(sv2Messages, keystart, keyend);
+
+                        // They may receive multiple messages so incase we will just seperate them
+                        if (!sv2Msg.empty())
+                        {
+                            if (!sTxMessage.empty())
+                                sTxMessage.append(" ; ");
+
+                             sTxMessage.append(sv2Msg);
+                        }
+                    }
+                }
+            }
+        }
+
         std::string sRainMessage = ExtractXML(msg, "<NARR>", "</NARR>");
 
         if (sMessageType.length())

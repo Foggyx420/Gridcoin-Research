@@ -209,22 +209,49 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         LOCK2(cs_main, wallet->cs_wallet);
 
         // Sendmany
+        bool fContainsMessage = false;
         std::vector<std::pair<CScript, int64_t> > vecSend;
+        unsigned int loc = 0;
+
+        messages.append("<MSG>");
+
 		foreach(const SendCoinsRecipient &rcp, recipients)
         {
             CScript scriptPubKey;
             scriptPubKey.SetDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
             vecSend.push_back(std::make_pair(scriptPubKey, rcp.amount));
             std::string smessage = MakeSafeMessage(FromQStringW(rcp.Message));
-            messages += "<MESSAGE>" + smessage + "</MESSAGE>";
 
+            // Message sysytem v2
+            // Store a message if there is one.
+            // We store by vout #
+            if (!smessage.empty())
+            {
+                fContainsMessage = true;
+
+                messages.append("<");
+                messages.append(ToString(loc));
+                messages.append(">");
+                messages.append(smessage);
+                messages.append("</");
+                messages.append(ToString(loc));
+                messages.append(">");
+            }
+
+            loc++;
         }
+
+        messages.append("</MSG>");
 
         CWalletTx wtx;
         CReserveKey keyChange(wallet);
         int64_t nFeeRequired = 0;
-		wtx.hashBoinc += messages;
-		bool fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, coinControl);
+
+        // Only store message xmls if there is a message. ExtractXML returns empty string if xml not found.
+        if (fContainsMessage)
+            wtx.hashBoinc += messages;
+
+        bool fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, coinControl, fContainsMessage);
 
         if(!fCreated)
         {

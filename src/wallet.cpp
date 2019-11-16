@@ -1574,7 +1574,7 @@ bool CWallet::SelectCoinsForStaking(unsigned int nSpendTime,
 }
 
 bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, set<pair<const CWalletTx*,unsigned int>>& setCoins,
-                                CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, const CCoinControl* coinControl)
+                                CWalletTx& wtxNew, CReserveKey& reservekey, int64_t& nFeeRet, const CCoinControl* coinControl, bool fContainsMessage)
 {
 
     int64_t nValueOut = 0;
@@ -1682,9 +1682,20 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                         scriptChange.SetDestination(vchPubKey.GetID());
                     }
 
-                    // Insert change txn at random position:
-                    vector<CTxOut>::iterator position = wtxNew.vout.begin()+GetRandInt(wtxNew.vout.size());
-                    wtxNew.vout.insert(position, CTxOut(nChange, scriptChange));
+                    // Behaviour change:
+                    // Before we would insert change in a random position however with messages this would make it a lot more difficult to
+                    // pinpoint which message is for what utxo.
+                    // For transactions that contains messages we will place change last.
+
+                    if (fContainsMessage)
+                        wtxNew.vout.push_back(CTxOut(nChange, scriptChange));
+
+                    else
+                    {
+                        // Insert change txn at random position:
+                        vector<CTxOut>::iterator position = wtxNew.vout.begin()+GetRandInt(wtxNew.vout.size());
+                        wtxNew.vout.insert(position, CTxOut(nChange, scriptChange));
+                    }
                 }
                 else
                     reservekey.ReturnKey();
@@ -1727,12 +1738,12 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
 }
 
 bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey,
-    int64_t& nFeeRet, const CCoinControl* coinControl)
+    int64_t& nFeeRet, const CCoinControl* coinControl, bool fContainsMessage)
 {
     // Initialize setCoins empty to let CreateTransaction choose via SelectCoins...
     set<pair<const CWalletTx*,unsigned int>> setCoins;
 
-    return CreateTransaction(vecSend, setCoins, wtxNew, reservekey, nFeeRet, coinControl);
+    return CreateTransaction(vecSend, setCoins, wtxNew, reservekey, nFeeRet, coinControl, fContainsMessage);
 }
 
 
