@@ -5,8 +5,6 @@
 #include <string>
 
 extern std::string GetArgument(const std::string& arg, const std::string& defaultvalue);
-extern std::string ScraperGetNeuralContract(bool bStoreConvergedStats = false, bool bContractDirectFromStatsUpdate = false);
-extern std::string ScraperGetNeuralHash();
 extern bool ScraperSynchronizeDPOR();
 extern std::string ExplainMagnitude(std::string sCPID);
 
@@ -19,16 +17,9 @@ bool NeuralNetNative::IsEnabled()
     return GetArgument("disableneuralnetwork", "false") == "false";
 }
 
-// This is for compatibility
-std::string NeuralNetNative::GetNeuralVersion()
-{
-    int64_t neural_id = IsNeuralNet();
-    return std::to_string(CLIENT_VERSION_MINOR) + "." + std::to_string(neural_id);
-}
-
 std::string NeuralNetNative::GetNeuralHash()
 {
-    return ScraperGetNeuralHash();
+    return GetSuperblockHash().ToString();
 }
 
 QuorumHash NeuralNetNative::GetSuperblockHash()
@@ -38,7 +29,7 @@ QuorumHash NeuralNetNative::GetSuperblockHash()
 
 std::string NeuralNetNative::GetNeuralContract()
 {
-    return ScraperGetNeuralContract(false, false);
+    return GetSuperblockContract().PackLegacy();
 }
 
 Superblock NeuralNetNative::GetSuperblockContract()
@@ -56,12 +47,4 @@ bool NeuralNetNative::SynchronizeDPOR(const BeaconConsensus& beacons)
 std::string NeuralNetNative::ExplainMagnitude(const std::string& cpid)
 {
     return ::ExplainMagnitude(cpid);
-}
-
-int64_t NeuralNetNative::IsNeuralNet()
-{
-    // This is the NN version number. TODO: Consider different number for new NN?
-    int64_t nNeuralNetVersion = 1999;
-
-    return nNeuralNetVersion;
 }

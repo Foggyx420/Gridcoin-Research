@@ -177,7 +177,6 @@ extern UniValue resetcpids(const UniValue& params, bool fHelp);
 extern UniValue staketime(const UniValue& params, bool fHelp);
 extern UniValue superblockage(const UniValue& params, bool fHelp);
 extern UniValue superblocks(const UniValue& params, bool fHelp);
-extern UniValue syncdpor2(const UniValue& params, bool fHelp);
 extern UniValue upgradedbeaconreport(const UniValue& params, bool fHelp);
 
 // Developers
@@ -189,16 +188,12 @@ extern UniValue debug2(const UniValue& params, bool fHelp);
 extern UniValue debug3(const UniValue& params, bool fHelp);
 extern UniValue debug4(const UniValue& params, bool fHelp);
 extern UniValue debugnet(const UniValue& params, bool fHelp);
-extern UniValue dportally(const UniValue& params, bool fHelp);
-extern UniValue forcequorum(const UniValue& params, bool fHelp);
-extern UniValue gatherneuralhashes(const UniValue& params, bool fHelp);
 extern UniValue rpc_getblockstats(const UniValue& params, bool fHelp);
 extern UniValue getlistof(const UniValue& params, bool fHelp);
 extern UniValue listdata(const UniValue& params, bool fHelp);
 extern UniValue listprojects(const UniValue& params, bool fHelp);
 extern UniValue memorizekeys(const UniValue& params, bool fHelp);
 extern UniValue network(const UniValue& params, bool fHelp);
-extern UniValue neuralrequest(const UniValue& params, bool fHelp);
 extern UniValue projects(const UniValue& params, bool fHelp);
 extern UniValue readconfig(const UniValue& params, bool fHelp);
 extern UniValue readdata(const UniValue& params, bool fHelp);
@@ -211,7 +206,6 @@ extern UniValue sendrawcontract(const UniValue& params, bool fHelp);
 extern UniValue superblockaverage(const UniValue& params, bool fHelp);
 extern UniValue tally(const UniValue& params, bool fHelp);
 extern UniValue tallyneural(const UniValue& params, bool fHelp);
-extern UniValue testnewcontract(const UniValue& params, bool fHelp);
 extern UniValue versionreport(const UniValue& params, bool fhelp);
 extern UniValue writedata(const UniValue& params, bool fHelp);
 

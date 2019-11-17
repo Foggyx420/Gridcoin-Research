@@ -42,16 +42,9 @@ bool DiagnosticsDialog::VerifyBoincPath()
     return boost::filesystem::exists(boincPath) ? true : false;
 }
 
-bool DiagnosticsDialog::FindCPID()
-{
-    std::string cpid = GetArgument("PrimaryCPID", "");
-
-    return IsResearcher(cpid) ? true : false;
-}
-
 bool DiagnosticsDialog::VerifyIsCPIDValid()
 {
-    boost::filesystem::path clientStatePath = (boost::filesystem::path) GetBoincDataDir();
+    boost::filesystem::path clientStatePath = GetBoincDataDir();
 
     if (!clientStatePath.empty())
         clientStatePath = clientStatePath / "client_state.xml";
@@ -65,7 +58,7 @@ bool DiagnosticsDialog::VerifyIsCPIDValid()
     fsbridge::ifstream clientStateStream;
     std::string clientState;
 
-    clientStateStream.open(clientStatePath.string());
+    clientStateStream.open(clientStatePath);
     clientState.assign((std::istreambuf_iterator<char>(clientStateStream)), std::istreambuf_iterator<char>());
     clientStateStream.close();
 
@@ -216,19 +209,6 @@ void DiagnosticsDialog::on_testButton_clicked()
     else
         ui->boincPathResultLabel->setText("Failed");
 
-    //find cpid
-#ifndef WIN32
-    ui->findCPIDResultLabel->setText("N/A");
-#else
-    ui->findCPIDResultLabel->setText("Testing...");
-    this->repaint();
-
-    if (FindCPID())
-        ui->findCPIDResultLabel->setText(QString::fromStdString("Passed CPID: " + GetArgument("PrimaryCPID", "")));
-
-    else
-        ui->findCPIDResultLabel->setText("Failed (Is PrimaryCPID in gridcoinresearch.conf?)");
-#endif
     //cpid valid
     ui->verifyCPIDValidResultLabel->setText("Testing...");
     this->repaint();

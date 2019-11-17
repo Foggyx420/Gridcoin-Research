@@ -86,7 +86,6 @@ bool fNoListen = false;
 bool fLogTimestamps = false;
 CMedianFilter<int64_t> vTimeOffsets(200,0);
 bool fReopenDebugLog = false;
-std::string GetNeuralVersion();
 
 bool fDevbuildCripple;
 
@@ -276,7 +275,7 @@ void LogPrintStr(const std::string &str)
         if (!fileout)
         {
             fs::path pathDebug = GetDataDir() / "debug.log";
-            fileout = fsbridge::fopen(pathDebug.string().c_str(), "a");
+            fileout = fsbridge::fopen(pathDebug, "a");
             if (fileout) setbuf(fileout, NULL); // unbuffered
         }
         if (fileout)
@@ -294,9 +293,15 @@ void LogPrintStr(const std::string &str)
             // reopen the log file, if requested
             if (fReopenDebugLog) {
                 fReopenDebugLog = false;
+
                 fs::path pathDebug = GetDataDir() / "debug.log";
-                if (freopen(pathDebug.string().c_str(),"a",fileout) != NULL)
-                    setbuf(fileout, NULL); // unbuffered
+                FILE* new_fileout = fsbridge::fopen(pathDebug, "a");
+
+                if (new_fileout) {
+                    setbuf(new_fileout, NULL); // unbuffered
+                    fclose(fileout);
+                    fileout = new_fileout;
+                }
             }
 
             // Debug print useful for profiling
@@ -787,16 +792,12 @@ fs::path GetProgramDir()
 
 }
 
-
-
 fs::path GetConfigFile()
 {
     fs::path pathConfigFile(GetArg("-conf", "gridcoinresearch.conf"));
     if (!pathConfigFile.is_absolute()) pathConfigFile = GetDataDir(false) / pathConfigFile;
     return pathConfigFile;
 }
-
-
 
 bool IsConfigFileEmpty()
 {
@@ -808,10 +809,6 @@ bool IsConfigFileEmpty()
     return false;
 
 }
-
-
-
-
 
 void ReadConfigFile(ArgsMap& mapSettingsRet,
                     ArgsMultiMap& mapMultiSettingsRet)
@@ -847,7 +844,7 @@ fs::path GetPidFile()
 #ifndef WIN32
 void CreatePidFile(const fs::path &path, pid_t pid)
 {
-    FILE* file = fsbridge::fopen(path.string().c_str(), "w");
+    FILE* file = fsbridge::fopen(path, "w");
     if (file)
     {
         fprintf(file, "%d\n", pid);
@@ -859,25 +856,13 @@ void CreatePidFile(const fs::path &path, pid_t pid)
 bool RenameOver(fs::path src, fs::path dest)
 {
 #ifdef WIN32
-    return MoveFileExA(src.string().c_str(), dest.string().c_str(),
+    return MoveFileExW(src.wstring().c_str(), dest.wstring().c_str(),
                       MOVEFILE_REPLACE_EXISTING);
 #else
     int rc = std::rename(src.string().c_str(), dest.string().c_str());
     return (rc == 0);
 #endif /* WIN32 */
 }
-
-/*
-void FileCommit(FILE *fileout)
-{
-    fflush(fileout);                // harmless if redundantly called
-#ifdef WIN32
-    _commit(_fileno(fileout));
-#else
-    fsync(fileno(fileout));
-#endif
-}
-*/
 
 // Newer FileCommit overload from Bitcoin.
 bool FileCommit(FILE *file)
@@ -918,7 +903,7 @@ void ShrinkDebugFile()
 {
     // Scroll debug.log if it's getting too big
     fs::path pathLog = GetDataDir() / "debug.log";
-    FILE* file = fsbridge::fopen(pathLog.string().c_str(), "r");
+    FILE* file = fsbridge::fopen(pathLog, "r");
     if (file && fs::file_size(pathLog) > 1000000)
     {
         // Restart the file with some of the end
@@ -927,7 +912,7 @@ void ShrinkDebugFile()
         int nBytes = fread(pch, 1, sizeof(pch), file);
         fclose(file);
 
-        file = fsbridge::fopen(pathLog.string().c_str(), "w");
+        file = fsbridge::fopen(pathLog, "w");
         if (file)
         {
             fwrite(pch, 1, nBytes, file);
@@ -973,7 +958,7 @@ bool LockDirectory(const fs::path& directory, const std::string lockfile_name, b
     return true;
 }
 
-std::string GetFileContents(std::string filepath)
+std::string GetFileContents(const fs::path filepath)
 {
     if (!fs::exists(filepath)) {
         LogPrintf("GetFileContents: file does not exist %s", filepath);
@@ -1195,25 +1180,14 @@ std::vector<std::string> split(const std::string& s, const std::string& delim)
     return elems;
 }
 
-std::string GetNeuralVersion()
-{
-    std::string neural_v = "0";
-    int64_t neural_id = NN::GetInstance()->IsNeuralNet();
-    neural_v = ToString(CLIENT_VERSION_MINOR) + "." + ToString(neural_id);
-    return neural_v;
-}
-
 // Format the subversion field according to BIP 14 spec (https://en.bitcoin.it/wiki/BIP_0014)
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments)
 {
-    std::string neural_v = GetNeuralVersion();
-
     std::ostringstream ss;
     ss << "/";
     ss << name << ":" << FormatVersion(nClientVersion);
 
     if (!comments.empty())         ss << "(" << boost::algorithm::join(comments, "; ") << ")";
-    ss << "(" << neural_v << ")";
 
     ss << "/";
     return ss.str();

@@ -6,7 +6,7 @@ DIST_SUBDIRS = univalue
 
 AM_LDFLAGS = ${libcurl_LIBS} $(PTHREAD_CFLAGS) $(LIBTOOL_LDFLAGS) $(HARDENED_LDFLAGS)
 AM_CXXFLAGS = $(HARDENED_CXXFLAGS) $(ERROR_CXXFLAGS)
-AM_CPPFLAGS = ${libcurl_CFLAGS} $(HARDENED_CPPFLAGS) -DSTATICLIB -DCURL_STATICLIB -DMINIUPNP_STATICLIB
+AM_CPPFLAGS = ${libcurl_CFLAGS} $(HARDENED_CPPFLAGS) -DSTATICLIB -DCURL_STATICLIB -DMINIUPNP_STATICLIB -DZIP_STATIC -DNN_STATIC_LIB
 EXTRA_LIBRARIES =
 
 if EMBEDDED_UNIVALUE
@@ -100,6 +100,7 @@ GRIDCOIN_CORE_H = \
 	neuralnet/project.h \
 	neuralnet/researcher.h \
 	neuralnet/superblock.h \
+	neuralnet/tally.h \
 	netbase.h \
 	net.h \
 	pbkdf2.h \
@@ -125,13 +126,13 @@ GRIDCOIN_CORE_H = \
 	support/cleanse.h \
 	support/lockedpool.h \
 	sync.h \
-	tally.h \
 	threadsafety.h \
 	tinyformat.h \
 	txdb.h \
 	txdb-leveldb.h \
 	ui_interface.h \
 	uint256.h \
+        upgrade.h \
 	util/memory.h \
 	util/reverse_iterator.h \
 	util/strencodings.h \
@@ -171,6 +172,7 @@ GRIDCOIN_CORE_CPP = addrdb.cpp \
 	neuralnet/project.cpp \
 	neuralnet/researcher.cpp \
 	neuralnet/superblock.cpp \
+	neuralnet/tally.cpp \
 	netbase.cpp \
 	net.cpp \
 	noui.cpp \
@@ -199,9 +201,9 @@ GRIDCOIN_CORE_CPP = addrdb.cpp \
 	support/cleanse.cpp \
 	support/lockedpool.cpp \
 	sync.cpp \
-	tally.cpp \
 	txdb-leveldb.cpp \
 	uint256.cpp \
+        upgrade.cpp \
 	util/strencodings.cpp \
 	util.cpp \
 	version.cpp \
